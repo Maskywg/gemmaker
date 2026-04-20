@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gem 實戰教學指南 | 打造你的專屬 AI 助手</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #5c2415; /* 大幅提亮為深鐵鏽紅，確保絕對不會像黑色 */
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        /* 3D 背景畫布設定 */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+        /* 毛玻璃效果卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08); /* 提高白底不透明度讓區塊更清晰 */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2); /* 讓邊框更明顯 */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); /* 增加立體陰影讓卡片浮現 */
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.12); /* 懸停時卡片稍微變亮，增加互動感 */
+            border-color: rgba(249, 115, 22, 0.6);
+            box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.5), 0 15px 40px rgba(0, 0, 0, 0.8);
+        }
+        /* 針對模擬選單的卡片取消 Hover 浮動效果，維持選單的穩定感 */
+        .menu-card:hover {
+            transform: none;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        /* 漸層文字 - 暖色日落漸層 */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(to right, #ff7e5f, #feb47b, #f6d365, #fda085);
+        }
+        /* 隱藏捲軸但可滾動 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #5c2415; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.5); 
+        }
+    </style>
+</head>
+<body class="antialiased relative">
+
+    <!-- 3D 背景 -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- 導覽列 -->
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-card rounded-none border-t-0 border-l-0 border-r-0" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <svg class="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    <span class="font-bold text-2xl tracking-wider text-white">Gem<span class="text-orange-400">Master</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#why" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">為何使用</a>
+                        <a href="#process" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">創建流程</a>
+                        <a href="#cases" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">實際案例</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄區塊 (Hero Section) -->
+    <header class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        <div class="relative z-10 text-center px-4 max-w-5xl mx-auto">
+            <div class="inline-block mb-4 px-4 py-1 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-300 text-sm font-semibold tracking-wide backdrop-blur-sm">
+                探索客製化 AI 的無限可能
+            </div>
+            <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                打造你的專屬大腦：<br />
+                <span class="text-gradient">Gem 實戰教學指南</span>
+            </h1>
+            <p class="mt-4 text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
+                不用再每次重複輸入冗長的背景設定。學習如何創建、優化並應用 Gem，讓 AI 完全貼合你的個人工作流。
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#process" class="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-full font-bold text-lg transition-all shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_30px_rgba(249,115,22,0.6)]">
+                    開始創建流程
+                </a>
+                <a href="#why" class="px-8 py-4 bg-transparent border border-gray-400 hover:border-white text-white rounded-full font-bold text-lg transition-all backdrop-blur-sm">
+                    了解更多
+                </a>
+            </div>
+        </div>
+        
+        <!-- 向下滾動提示 -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
+            <a href="#why" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            </a>
+        </div>
+    </header>
+
+    <!-- 區塊一：我們為什麼要使用 Gem？ -->
+    <section id="why" class="py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gradient inline-block">1. 為什麼要使用 Gem？</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg mb-6">標準的 AI 模型雖然強大，但「客製化的 Gem」能讓它真正成為你的分身。</p>
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                    <a href="https://drive.google.com/file/d/1q3sHEX9xB3h8LxG4aIxV63HAduqa1LD_/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-300 transition-all text-sm font-medium backdrop-blur-sm shadow-[0_0_10px_rgba(249,115,22,0.2)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        查看 Gem 完整介紹簡報
+                    </a>
+                    <a href="https://gemini.google.com/gems/view?utm_source=app_launcher&utm_medium=owned&utm_campaign=base_all" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-full text-red-300 transition-all text-sm font-medium backdrop-blur-sm shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        直接前往 Gemini Gems
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 區塊二：Gem 的實際創建流程 -->
+    <section id="process" class="py-24 relative z-10 bg-black/40 backdrop-blur-md border-y border-white/5">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gradient inline-block">2. 實際創建流程</h2>
+                <p class="text-gray-400 text-lg">四個簡單步驟，從零打造你的專屬大師。</p>
+            </div>
+
+            <div class="relative">
+                <!-- 時間軸中線 -->
+                <div class="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-px bg-gradient-to-b from-red-500 via-orange-500 to-amber-500"></div>
+
+                <!-- 步驟 1 -->
+                <div class="flex flex-col md:flex-row items-center mb-16 relative">
+                    <div class="md:w-1/2 md:pr-12 text-center md:text-right mb-6 md:mb-0">
+                        <h3 class="text-2xl font-bold text-red-400 mb-2">Step 1. 賦予身份與命名</h3>
+                        <p class="text-gray-400">給你的 Gem 一個清晰的名字和簡短描述（例如：「SEO 爆款文章寫手」）。這有助於你在多個 Gem 中快速找到它。</p>
+                    </div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-10 h-10 bg-red-500 rounded-full border-4 border-[#5c2415] items-center justify-center z-10 font-bold">1</div>
+                    <div class="md:w-1/2 md:pl-12">
+                        <div class="glass-card p-4 border-l-4 border-l-red-500">
+                            <code class="text-sm text-gray-300">Name: 資深 Python 架構師<br>Description: 專精於編寫高效能且符合 PEP 8 規範的 Python 程式碼。</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步驟 2 -->
+                <div class="flex flex-col md:flex-row-reverse items-center mb-16 relative">
+                    <div class="md:w-1/2 md:pl-12 text-center md:text-left mb-6 md:mb-0">
+                        <h3 class="text-2xl font-bold text-orange-400 mb-2">Step 2. 撰寫核心指令 (Instructions)</h3>
+                        <p class="text-gray-400">這是最關鍵的一步。你需要詳細規定它的行為模式、語氣、以及必須遵守的規則。建議使用清晰的結構（如 Markdown 或 YAML 格式）。</p>
+                        <div class="flex flex-col items-center md:items-start gap-3 mt-4">
+                            <a href="https://docs.google.com/document/d/13cZXf1v9ITDkCKg9F7246y5xEv_INCvaeBNj1LV-Zqw/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-full text-red-400 transition-all text-sm font-medium backdrop-blur-sm shadow-[0_0_10px_rgba(239,68,68,0.1)] hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                為創建機器人的機器人指令
+                            </a>
+                            <a href="https://docs.google.com/document/d/1IPilUzGa9cHMlbRJsMdYm5I03coNIW1FqcL3Szi0OTk/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-full text-green-400 transition-all text-sm font-medium backdrop-blur-sm shadow-[0_0_10px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                創建NotebookLM 機器人指令
+                            </a>
+                        </div>
+                        <div class="mt-2 text-xs text-orange-300/60 font-medium tracking-wide">
+                            * 此來源為三師爸Sense Bar @sensebar
+                        </div>
+                        <div class="flex flex-col items-center md:items-start mt-4">
+                            <a href="https://docs.google.com/document/d/1c28B7JIuqhLXMTOV3Hd4-FnMKI_TABYePWspM8SBNRc/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-400 transition-all text-sm font-medium backdrop-blur-sm shadow-[0_0_10px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                優化的創建機器人的機器人指令
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-10 h-10 bg-orange-500 rounded-full border-4 border-[#5c2415] items-center justify-center z-10 font-bold">2</div>
+                    <div class="md:w-1/2 md:pr-12">
+                        <div class="glass-card p-4 border-r-4 border-r-orange-500">
+                            <code class="text-sm text-gray-300">
+                                角色設定：你是一位在矽谷工作 10 年的軟體工程師。<br>
+                                任務：幫我 Review 程式碼。<br>
+                                限制：直接給出優化後的程式碼，不需要多餘的客套話。
+                            </code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步驟 3 -->
+                <div class="flex flex-col md:flex-row items-center mb-16 relative">
+                    <div class="md:w-1/2 md:pr-12 text-center md:text-right mb-6 md:mb-0">
+                        <h3 class="text-2xl font-bold text-amber-400 mb-2">Step 3. 匯入知識庫 (Knowledge)</h3>
+                        <p class="text-gray-400 mb-4">如果任務需要特定的背景知識，你可以透過 Gemini 選單將以下多元的來源匯入，它會將這些內容視為最高指導原則。</p>
+                    </div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-10 h-10 bg-amber-500 rounded-full border-4 border-[#5c2415] items-center justify-center z-10 font-bold">3</div>
+                    <div class="md:w-1/2 md:pl-12 flex justify-center md:justify-start">
+                        <!-- 模擬截圖的下拉選單介面 -->
+                        <div class="glass-card menu-card p-3 flex flex-col min-w-[280px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-white/20 bg-[#1e1e1e]/90">
+                            <label class="px-4 py-3 flex items-center gap-4 hover:bg-white/10 rounded-xl cursor-pointer transition-colors group">
+                                <input type="file" class="hidden">
+                                <svg class="w-[22px] h-[22px] text-gray-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                <span class="text-gray-200 group-hover:text-white text-[15px] font-medium tracking-wide transition-colors">上傳檔案</span>
+                            </label>
+                            <a href="https://drive.google.com/drive/u/0/home" target="_blank" rel="noopener noreferrer" class="px-4 py-3 flex items-center gap-4 hover:bg-blue-500/10 rounded-xl cursor-pointer transition-colors group">
+                                <svg class="w-[22px] h-[22px] text-gray-300 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.05 4.575a2 2 0 0 1 3.9 0l6.3 10.91A2 2 0 0 1 18.525 18.5H5.475a2 2 0 0 1-1.725-3.015l6.3-10.91z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11l-3.5 6h7z"></path></svg>
+                                <span class="text-gray-200 group-hover:text-blue-400 text-[15px] font-medium tracking-wide transition-colors">加入雲端硬碟檔案</span>
+                            </a>
+                            <label class="px-4 py-3 flex items-center gap-4 hover:bg-white/10 rounded-xl cursor-pointer transition-colors group">
+                                <input type="file" accept="image/*" class="hidden">
+                                <svg class="w-[22px] h-[22px] text-gray-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12V4a4 4 0 0 1 4 4 4 4 0 0 1-4 4z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12H4a4 4 0 0 1 4-4 4 4 0 0 1 4 4z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12v8a4 4 0 0 1-4-4 4 4 0 0 1 4-4z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12h8a4 4 0 0 1-4 4 4 4 0 0 1-4-4z"/>
+                                </svg>
+                                <span class="text-gray-200 group-hover:text-white text-[15px] font-medium tracking-wide transition-colors">相簿</span>
+                            </label>
+                            <div class="px-4 py-3 flex items-center gap-4 hover:bg-white/10 rounded-xl cursor-default transition-colors">
+                                <svg class="w-[22px] h-[22px] text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                                <span class="text-gray-200 text-[15px] font-medium tracking-wide">匯入程式碼</span>
+                            </div>
+                            <a href="https://notebooklm.google.com/?utm_source=app_launcher&utm_medium=referral&authuser=0" target="_blank" rel="noopener noreferrer" class="px-4 py-3 flex items-center gap-4 hover:bg-green-500/10 rounded-xl cursor-pointer transition-colors group">
+                                <svg class="w-[22px] h-[22px] text-gray-300 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                <span class="text-gray-200 group-hover:text-green-400 text-[15px] font-medium tracking-wide transition-colors">NotebookLM</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步驟 4 -->
+                <div class="flex flex-col md:flex-row-reverse items-center relative">
+                    <div class="md:w-1/2 md:pl-12 text-center md:text-left mb-6 md:mb-0">
+                        <h3 class="text-2xl font-bold text-lime-400 mb-2">Step 4. 壓力測試與迭代</h3>
+                        <p class="text-gray-400">在右側的預覽視窗中直接與它對話。給它極端或模糊的提示，看看它是否能穩定產出。如果發現偏離設定，就隨時修改 Step 2 的指令。</p>
+                    </div>
+                    <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 w-10 h-10 bg-lime-500 rounded-full border-4 border-[#5c2415] items-center justify-center z-10 font-bold">4</div>
+                    <div class="md:w-1/2 md:pr-12">
+                        <div class="glass-card p-6 border-r-4 border-r-lime-500 flex flex-col gap-3">
+                            <div class="bg-gray-800/50 p-3 rounded-lg text-sm text-gray-300 w-3/4 self-end">幫我寫一篇關於咖啡的貼文。</div>
+                            <div class="bg-orange-900/40 p-3 rounded-lg text-sm text-gray-200 w-5/6">好的，根據品牌指南，我將使用溫暖且帶有文青氣息的語氣撰寫，並強調我們的阿拉比卡豆來源...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 區塊二點五：AI 指令生成器 (Gemini 整合) -->
+    <section id="ai-generator" class="py-24 relative z-10">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card p-8 md:p-12 relative overflow-hidden">
+                <!-- 背景光暈裝飾 -->
+                <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-orange-600/20 blur-[80px]"></div>
+                <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-red-600/20 blur-[80px]"></div>
+
+                <div class="relative z-10 text-center mb-10">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">不知道怎麼寫指令？<span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400">交給 AI 吧！</span></h2>
+                    <p class="text-gray-400 text-lg">告訴我你想要什麼樣的助手，我會用 Gemini API 為你量身打造一段專業的 Gem 核心指令。</p>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <!-- 新增：API Key 輸入區塊 -->
+                    <div class="bg-orange-900/20 border border-orange-500/30 rounded-xl p-4">
+                        <label for="api-key-input" class="block text-sm font-medium text-orange-300 mb-2">
+                            🔑 步驟一：請輸入您的 Gemini API Key (安全保證：金鑰僅於本地端執行，不會被儲存)
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="password" id="api-key-input" class="flex-grow bg-black/50 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors" placeholder="AIzaSy...">
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="whitespace-nowrap justify-center px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-gray-300 flex items-center transition-colors">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                取得免費 Key
+                            </a>
+                        </div>
+                    </div>
+
+                    <textarea id="gem-idea-input" rows="3" class="w-full bg-black/40 border border-white/20 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors resize-none" placeholder="步驟二：請輸入構想。例如：我想要一個嚴厲的健身教練，會用軍事化的口吻督促我運動..."></textarea>
+                    
+                    <!-- 新增：輸出格式選擇區塊 -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <span class="text-sm text-gray-400 font-medium whitespace-nowrap">輸出格式：</span>
+                        <div class="flex flex-wrap justify-center bg-black/40 border border-white/20 rounded-lg p-1 gap-1">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="format" value="markdown" class="peer sr-only" checked>
+                                <div class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-400 peer-checked:bg-orange-600 peer-checked:text-white transition-all">Markdown</div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="format" value="yaml" class="peer sr-only">
+                                <div class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-400 peer-checked:bg-orange-600 peer-checked:text-white transition-all">YAML</div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="format" value="natural" class="peer sr-only">
+                                <div class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-400 peer-checked:bg-orange-600 peer-checked:text-white transition-all">自然語言</div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="format" value="yaml-natural" class="peer sr-only">
+                                <div class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-400 peer-checked:bg-orange-600 peer-checked:text-white transition-all">YAML + 自然語言</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="generate-gem-btn" class="w-full sm:w-auto self-center px-8 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white rounded-full font-bold text-lg transition-all shadow-[0_0_15px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.6)] flex items-center justify-center gap-2">
+                        <span>✨ 幫我生成專屬指令</span>
+                        <svg id="loading-spinner" class="hidden w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
+                </div>
+
+                <!-- 生成結果區塊 -->
+                <div id="result-container" class="hidden mt-8">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-bold text-orange-400 uppercase tracking-wider">生成的 Instructions</span>
+                        <div class="flex items-center gap-3">
+                            <span id="copy-feedback" class="text-sm text-green-400 opacity-0 transition-opacity">已複製！</span>
+                            <button id="copy-btn" class="text-gray-400 hover:text-white transition-colors flex items-center gap-1 text-sm bg-white/5 hover:bg-white/10 px-3 py-1 rounded-md">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                複製指令
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-black/60 border border-orange-500/30 p-6 rounded-xl relative">
+                        <div id="generated-prompt" class="text-gray-300 font-mono text-sm leading-relaxed whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 區塊三：我所創建的各種 Gem 案例 -->
+    <section id="cases" class="py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gradient inline-block">3. 實戰 Gem 案例庫</h2>
+                <p class="text-gray-400 text-lg">以下是我個人創建並日常使用的主力 Gem，點擊即可直接加入您的工作流中。</p>
+            </div>
+
+            <!-- 全新網格排版，適合大量案例 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                
+                <a href="https://gemini.google.com/gem/1-bQxKZ2X_AUQMVrRLDiPYWCdHYjRfU-V?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">⚙️</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">工程視覺化與動力學動畫專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1_9a4D-hn-GxbH3xfI96LTkVpfwf00wTU?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🖼️</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">極簡影像生成專員</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1QXGjAOaXLVIX4sAiTjr4lHybM21G7W6t?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🏗️</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">建築施工分鏡圖 Prompt 生成專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1b5fQnD7Tyu-l8Ugn91hJzgf8Xz54MUi-?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🧬</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">生物視覺化導師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/13_sCHeHqE_lknSK88GUfRm8tzRDjwkXE?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">⏳</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">時空倒錯視覺構思師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1ldoVCKG4LcdFPCa5PL20Yr0UAs4YwjXt?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">💡</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">創意連鎖發想專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1NVEPWIR_JsppGaEFxU0perLRYQxzD8LE?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">⚛️</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">物理視覺化導師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1lJ9xRoDI8c5MA2xgYklfUYEflX4qkNLN?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">📊</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">專業深度研究分析師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/18WYq7xW-js_FzFpyH9EIm0BysESYwEDZ?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🤪</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">屁話文學大師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1mZbnTsWntKV_J6lJX8C0OGDjG14qAXeC?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🤖</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">機器人指令架構師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1B5vgQ7SmhE-15V3m2x6p8WPRrLBg5ySq?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">✨</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">金句生成專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1BU5u0NZ9VA9Vzx4p7BXFSrlbXq5YYJMq?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">📱</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">QR Code 快速生成專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1e6wa4Zj_IiKNP2WjRu4QM3i8KW5GUhw5?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🎭</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">專業角色設定圖繪製大師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1iUcVFCPn02p1jeupUf42M20fPqL52npZ?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">📖</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">創意漫畫腳本建築師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1iwqaKOasR062c6nRj737bxCTjGlMi85c?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🎵</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">Suno AI 音樂提示詞生成專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1fTFzz8ytqHrsrHKPc9pAv3P4TYUBeHr7?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🚀</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">月球移民計劃</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1zHI3aK7crLVRqXJ1UTlmTmXXfSRMvULr?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">⚔️</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">孫子兵法現代軍師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1gRy6msIai5vMiiXqwSsX-aqoCXM497Um?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">📜</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">蘇東坡 2.1</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1I5frelm7jKSMCqQlNuXTWTvEsUpF3SNR?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">📝</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">古典詩詞白話翻譯專家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1v-m5kjytvVz71dJmyc0YAMKsoL45-BoP?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🎨</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">漫畫角色轉化繪師</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+                <a href="https://gemini.google.com/gem/1Ri3vTzSL3L7k6C_IKnZeg0lwV9ZyAEM_?usp=sharing" target="_blank" rel="noopener noreferrer" class="glass-card p-6 flex flex-col justify-between group h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-4">🌸</div>
+                        <h3 class="text-lg font-bold text-gray-100 group-hover:text-orange-300 transition-colors mb-2">詩歌視覺化藝術家</h3>
+                    </div>
+                    <div class="relative z-10 mt-4 flex items-center text-sm font-medium text-orange-400 group-hover:text-orange-300">
+                        開啟 Gem <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer class="py-10 border-t border-white/10 text-center relative z-10 bg-black/50 backdrop-blur-sm">
+        <p class="text-gray-500 text-sm">
+            ＠2026 GemMaster, 打造更聰明的工作流程。<br>
+            <span class="text-orange-400/80 mt-2 inline-block font-medium tracking-wider">網頁製作：Masky Wang</span>
+        </p>
+    </footer>
+
+    <!-- Three.js 3D 動畫主視覺腳本 -->
+    <script>
+        // 確保視窗載入後再初始化 Three.js
+        window.onload = function() {
+            init3DBackground();
+        };
+
+        function init3DBackground() {
+            const canvas = document.querySelector('#bg-canvas');
+            
+            // 1. 場景設定
+            const scene = new THREE.Scene();
+            // 同步調整 3D 背景霧氣顏色為深鐵鏽紅
+            scene.fog = new THREE.FogExp2(0x5c2415, 0.02);
+
+            // 2. 相機設定
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            // 3. 渲染器設定
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                alpha: true,
+                antialias: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // 4. 光源設定 - 改為暖色燈光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0xff7e5f, 2, 100);
+            pointLight1.position.set(10, 10, 10);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xfeb47b, 2, 100);
+            pointLight2.position.set(-10, -10, 10);
+            scene.add(pointLight2);
+
+            const pointLight3 = new THREE.PointLight(0xf6d365, 1.5, 100);
+            pointLight3.position.set(0, 0, -20);
+            scene.add(pointLight3);
+
+            // 5. 創建漂浮的 Gems (寶石/八面體)
+            const gems = [];
+            const gemCount = 60;
+            
+            // 寶石顏色組合 - 改為日落暖色調 (橘、黃、紅)
+            const colors = [0xff7e5f, 0xfeb47b, 0xf6d365, 0xfda085, 0xff6b6b];
+
+            for(let i = 0; i < gemCount; i++) {
+                // 大小隨機
+                const radius = Math.random() * 1.5 + 0.5;
+                const geometry = new THREE.OctahedronGeometry(radius);
+                
+                // 材質：具有光澤感的實體或線條
+                const isWireframe = Math.random() > 0.8;
+                const material = new THREE.MeshStandardMaterial({
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    roughness: 0.1,
+                    metalness: 0.8,
+                    wireframe: isWireframe,
+                    transparent: true,
+                    opacity: isWireframe ? 0.3 : 0.8
+                });
+
+                const gem = new THREE.Mesh(geometry, material);
+
+                // 隨機初始位置 (散佈在畫面上)
+                gem.position.x = (Math.random() - 0.5) * 80;
+                gem.position.y = (Math.random() - 0.5) * 80;
+                gem.position.z = (Math.random() - 0.5) * 60 - 10;
+
+                // 隨機旋轉角度
+                gem.rotation.x = Math.random() * Math.PI;
+                gem.rotation.y = Math.random() * Math.PI;
+
+                // 儲存獨立的動畫參數
+                gem.userData = {
+                    rotSpeedX: (Math.random() - 0.5) * 0.02,
+                    rotSpeedY: (Math.random() - 0.5) * 0.02,
+                    floatSpeed: (Math.random() * 0.02) + 0.01,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    originalY: gem.position.y
+                };
+
+                scene.add(gem);
+                gems.push(gem);
+            }
+
+            // 添加滑鼠互動效果
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - windowHalfX) * 0.05;
+                mouseY = (event.clientY - windowHalfY) * 0.05;
+            });
+
+            // 6. 動畫迴圈
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const time = clock.getElapsedTime();
+
+                // 相機緩慢跟隨滑鼠移動產生視差感
+                targetX = mouseX * 0.5;
+                targetY = mouseY * 0.5;
+                camera.position.x += (targetX - camera.position.x) * 0.02;
+                camera.position.y += (-targetY - camera.position.y) * 0.02;
+                camera.lookAt(scene.position);
+
+                // 更新每個寶石的狀態
+                gems.forEach(gem => {
+                    // 自轉
+                    gem.rotation.x += gem.userData.rotSpeedX;
+                    gem.rotation.y += gem.userData.rotSpeedY;
+
+                    // 上下浮動 (使用 Sine 波)
+                    gem.position.y = gem.userData.originalY + Math.sin(time * gem.userData.floatSpeed + gem.userData.floatOffset) * 2;
+                });
+
+                // 讓場景整體緩慢旋轉
+                scene.rotation.y += 0.001;
+
+                renderer.render(scene, camera);
+            }
+
+            // 開始動畫
+            animate();
+
+            // 7. 響應式處理：視窗大小改變時更新相機與渲染器
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // --- Gemini API 整合：專屬指令生成器 ---
+        const apiKey = ""; // API Key 會在執行環境中動態注入
+        
+        async function generateGemInstructions(userIdea, format, customApiKey) {
+            // 優先使用使用者自行輸入的 API Key，若無則使用系統注入的 apiKey
+            const activeApiKey = customApiKey || apiKey;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeApiKey}`;
+            
+            // 根據選擇的格式動態調整指令
+            let formatInstruction = "";
+            if (format === 'markdown') {
+                formatInstruction = "並且使用 Markdown 格式，包含以下明確的段落標題：\n### 【角色設定】\n### 【主要任務】\n### 【語氣與風格】\n### 【嚴格限制】。";
+            } else if (format === 'yaml') {
+                formatInstruction = "並且使用 YAML 格式。請確保輸出的 YAML 結構嚴謹，可以包含如 Role, Task, Tone, Constraints 等明確的鍵值。";
+            } else if (format === 'natural') {
+                formatInstruction = "並且使用流暢的自然語言敘述格式，像是一段直接寫給 AI 閱讀的完整信件或指示說明，不需刻意使用任何特殊符號或標記來排版。內容需涵蓋角色設定、主要任務、語氣風格和嚴格限制。";
+            } else if (format === 'yaml-natural') {
+                formatInstruction = "並且結合 YAML 與自然語言。請先以嚴謹的 YAML 格式定義核心結構（如 Role, Task, Tone, Constraints），接著在 YAML 區塊下方，加入一段流暢的自然語言作為情境補充說明，幫助 AI 更深刻地理解背後的上下文與細微語氣。";
+            }
+
+            const systemPrompt = `你是一個精通撰寫 AI 提示詞 (Prompt Engineering) 的大師。
+使用者會提供他們想要的 AI 助手 (Gem) 的初步構想。
+請根據他們的需求，幫他們設計出一段完美、可以直接貼到 Gem 設定裡的「核心指令 (Instructions)」。
+
+請務必使用繁體中文輸出，${formatInstruction}
+
+除了指令內容外，不要輸出任何其他多餘的問候語或自我介紹。直接給出指令內容。`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userIdea }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            let attempt = 0;
+
+            while (attempt < 5) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，生成內容時發生未知的錯誤。";
+                    
+                } catch (error) {
+                    attempt++;
+                    if (attempt >= 5) {
+                        return "系統連線錯誤，請檢查網路或稍後再試。\n錯誤訊息：" + error.message;
+                    }
+                    // 指數退避 (Exponential Backoff) 等待後重試
+                    await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]));
+                }
+            }
+        }
+
+        // 綁定 UI 互動事件
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generate-gem-btn');
+            const inputArea = document.getElementById('gem-idea-input');
+            const resultContainer = document.getElementById('result-container');
+            const generatedPromptDiv = document.getElementById('generated-prompt');
+            const spinner = document.getElementById('loading-spinner');
+            const btnText = generateBtn.querySelector('span');
+            const copyBtn = document.getElementById('copy-btn');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            generateBtn.addEventListener('click', async () => {
+                const customApiKey = document.getElementById('api-key-input').value.trim();
+                const userIdea = inputArea.value.trim();
+                
+                // 檢查 API Key (如果不是在有預設 key 的環境中)
+                if (!customApiKey && !apiKey) {
+                    const keyInput = document.getElementById('api-key-input');
+                    keyInput.placeholder = "請務必輸入 API Key 才能執行喔！";
+                    keyInput.classList.add('border-red-500');
+                    setTimeout(() => keyInput.classList.remove('border-red-500'), 2000);
+                    return;
+                }
+
+                if (!userIdea) {
+                    // 自訂訊息提示，取代原生的 alert()
+                    inputArea.placeholder = "請先輸入您的構想喔！例如：一個說話很幽默的歷史老師...";
+                    inputArea.classList.add('border-red-500');
+                    setTimeout(() => inputArea.classList.remove('border-red-500'), 2000);
+                    return;
+                }
+
+                // 取得使用者選擇的格式
+                const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+
+                // 切換為 Loading 狀態
+                generateBtn.disabled = true;
+                generateBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                btnText.textContent = "正在施展魔法...";
+                spinner.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+
+                // 呼叫 Gemini API，並傳入選擇的格式與自訂金鑰
+                const resultText = await generateGemInstructions(userIdea, selectedFormat, customApiKey);
+
+                // 顯示結果
+                generatedPromptDiv.textContent = resultText;
+                resultContainer.classList.remove('hidden');
+                
+                // 恢復按鈕狀態
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+                btnText.textContent = "✨ 幫我生成專屬指令";
+                spinner.classList.add('hidden');
+            });
+
+            // 複製到剪貼簿功能 (使用 execCommand 確保在 iframe 環境也能運作)
+            copyBtn.addEventListener('click', () => {
+                const textToCopy = generatedPromptDiv.textContent;
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    copyFeedback.style.opacity = '1';
+                    setTimeout(() => copyFeedback.style.opacity = '0', 2000);
+                } catch (err) {
+                    console.error('複製失敗', err);
+                }
+                document.body.removeChild(textarea);
+            });
+        });
+    </script>
+</body>
+</html>
