@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEM 協同工作流程圖 — Masky Wang</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --bg2: #ffffff;
+  --bg3: #f0eeea;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1a;
+  --muted: #7a7a7a;
+  --purple: #6d4fc9;
+  --purple-dim: rgba(109,79,201,0.08);
+  --teal: #0e8f65;
+  --teal-dim: rgba(14,143,101,0.08);
+  --amber: #b26a00;
+  --amber-dim: rgba(178,106,0,0.08);
+  --coral: #c93a52;
+  --coral-dim: rgba(201,58,82,0.08);
+  --blue: #1a68c4;
+  --blue-dim: rgba(26,104,196,0.08);
+  --pink: #b83a8c;
+  --pink-dim: rgba(184,58,140,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 2.5rem 3rem 2rem;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+header::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(109,79,201,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-mono {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--purple);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-bottom: .75rem;
+}
+header h1 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+header p {
+  margin-top: .5rem;
+  color: var(--muted);
+  font-size: .85rem;
+  font-weight: 300;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 1rem;
+  color: var(--purple);
+  text-decoration: none;
+  font-size: .78rem;
+  font-weight: 500;
+  border: 1px solid rgba(109,79,201,.18);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--purple-dim);
+  transition: all .2s;
+}
+.back-link:hover {
+  transform: translateX(-2px);
+  border-color: rgba(109,79,201,.35);
+}
+.stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.stat-label { font-size: .72rem; color: var(--muted); letter-spacing: .05em; }
+
+/* ── LEGEND ── */
+.legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 3rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .75rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  transition: all .2s;
+}
+.legend-item:hover { color: var(--text); border-color: var(--border); }
+.legend-item.active { color: var(--text); border-color: var(--border); background: var(--bg3); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── PIPELINE CONTAINER ── */
+.pipelines {
+  padding: 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── PIPELINE SECTION ── */
+.pipeline {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg2);
+  transition: border-color .3s;
+}
+.pipeline:hover { border-color: rgba(255,255,255,0.12); }
+.pipeline.hidden { display: none; }
+
+.pipeline-header {
+  padding: .9rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.pipeline-header:hover { background: rgba(255,255,255,0.02); }
+.pipeline-emoji { font-size: 1rem; }
+.pipeline-title {
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.pipeline-count {
+  margin-left: auto;
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  color: var(--muted);
+}
+.pipeline-chevron {
+  font-size: .7rem;
+  color: var(--muted);
+  transition: transform .3s;
+}
+.pipeline.collapsed .pipeline-chevron { transform: rotate(-90deg); }
+.pipeline.collapsed .pipeline-body { display: none; }
+
+.pipeline-body {
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: flex-start;
+}
+
+/* ── GEM NODE ── */
+.gem-node {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform .2s;
+}
+.gem-node:hover { transform: translateY(-2px); }
+
+.gem-chip {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: .78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.gem-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.gem-chip:hover::after { opacity: .04; }
+.gem-chip.active { box-shadow: 0 0 0 2px currentColor; }
+
+.gem-sub {
+  font-size: .65rem;
+  color: var(--muted);
+  padding: 0 4px;
+  text-align: center;
+}
+
+/* ── ARROW ── */
+.arrow {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 1rem;
+  padding: 0 2px;
+  margin-top: -4px;
+  align-self: center;
+}
+.arrow.dashed { opacity: .4; }
+
+/* ── CROSS COMBO ── */
+.cross-section {
+  padding: 1.5rem 3rem 2.5rem;
+  border-top: 1px solid var(--border);
+}
+.cross-title {
+  font-size: .72rem;
+  font-family: 'Space Mono', monospace;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.cross-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: .75rem;
+}
+.cross-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.cross-card:hover {
+  border-color: rgba(255,255,255,0.15);
+  background: var(--bg3);
+  transform: translateY(-2px);
+}
+.cross-card-title {
+  font-size: .8rem;
+  font-weight: 500;
+  margin-bottom: .35rem;
+  line-height: 1.4;
+}
+.cross-card-desc {
+  font-size: .7rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── DETAIL PANEL (side drawer) ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s;
+  backdrop-filter: blur(4px);
+}
+.overlay.open { opacity: 1; pointer-events: auto; }
+
+.detail-panel {
+  position: fixed;
+  top: 0; right: 0;
+  width: min(480px, 100vw);
+  height: 100vh;
+  background: var(--bg3);
+  border-left: 1px solid var(--border);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+.detail-panel.open { transform: translateX(0); }
+
+.panel-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.panel-close {
+  position: absolute;
+  top: 1.2rem; right: 1.2rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  transition: all .2s;
+}
+.panel-close:hover { color: var(--text); border-color: rgba(0,0,0,.2); }
+
+.panel-badge {
+  display: inline-block;
+  font-size: .65rem;
+  font-family: 'Space Mono', monospace;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  margin-bottom: .75rem;
+  letter-spacing: .06em;
+}
+.panel-title {
+  font-size: 1.15rem;
+  font-weight: 500;
+  margin-bottom: .25rem;
+  line-height: 1.3;
+}
+.panel-desc {
+  font-size: .8rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.panel-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.panel-section-title {
+  font-size: .65rem;
+  font-family: 'Space Mono', monospace;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: .5rem;
+}
+
+.io-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+.io-box {
+  background: var(--bg2);
+  border-radius: 8px;
+  padding: .75rem;
+  border: 1px solid var(--border);
+}
+.io-label {
+  font-size: .6rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.io-text {
+  font-size: .75rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.prompt-area {
+  background: #f5f4f0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .9rem;
+  position: relative;
+}
+.prompt-text {
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  color: #2a2a2a;
+}
+
+.copy-btn {
+  position: absolute;
+  top: .6rem; right: .6rem;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 3px 8px;
+  font-size: .65rem;
+  font-family: 'Space Mono', monospace;
+  transition: all .2s;
+}
+.copy-btn:hover { color: var(--text); border-color: rgba(0,0,0,.2); }
+.copy-btn.copied { color: var(--teal); border-color: var(--teal); }
+
+.tips-box {
+  border-left: 2px solid var(--purple);
+  padding: .6rem .9rem;
+  background: var(--purple-dim);
+  border-radius: 0 6px 6px 0;
+  font-size: .75rem;
+  line-height: 1.6;
+  color: #4a3496;
+}
+
+.panel-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.open-gem-btn {
+  width: 100%;
+  padding: .7rem;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: .8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.open-gem-btn:hover { opacity: .85; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  header, .pipelines, .cross-section { padding-left: 1.2rem; padding-right: 1.2rem; }
+  .legend { padding-left: 1.2rem; padding-right: 1.2rem; }
+  .pipeline-body { flex-direction: column; align-items: flex-start; }
+  .arrow { transform: rotate(90deg); }
+  .arrow.dashed { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="GEMmaking.html">← 回到 Gem 實戰教學指南</a>
+  <div class="header-mono">✦ GEM &amp; GPT Hub — Masky Wang</div>
+  <h1>25 個 GEM 協同工作流程圖</h1>
+  <p>點擊任意節點查看詳細說明與提示詞模板</p>
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-num" style="color:var(--purple)">25</span>
+      <span class="stat-label">GEMINI GEMs</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" style="color:var(--teal)">5</span>
+      <span class="stat-label">創作流水線</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" style="color:var(--amber)">6</span>
+      <span class="stat-label">跨流程組合</span>
+    </div>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="legend-item active" data-filter="all" onclick="filterPipeline('all',this)">
+    <span class="legend-dot" style="background:#888"></span>全部流水線
+  </div>
+  <div class="legend-item" data-filter="creative" onclick="filterPipeline('creative',this)">
+    <span class="legend-dot" style="background:var(--purple)"></span>✍️ 創意內容
+  </div>
+  <div class="legend-item" data-filter="visual" onclick="filterPipeline('visual',this)">
+    <span class="legend-dot" style="background:var(--teal)"></span>🎨 視覺化
+  </div>
+  <div class="legend-item" data-filter="music" onclick="filterPipeline('music',this)">
+    <span class="legend-dot" style="background:var(--amber)"></span>🎵 音樂創作
+  </div>
+  <div class="legend-item" data-filter="roleplay" onclick="filterPipeline('roleplay',this)">
+    <span class="legend-dot" style="background:var(--coral)"></span>🎭 語言角色
+  </div>
+  <div class="legend-item" data-filter="tech" onclick="filterPipeline('tech',this)">
+    <span class="legend-dot" style="background:var(--blue)"></span>🤖 技術工具
+  </div>
+</div>
+
+<div class="pipelines">
+
+  <!-- 流水線 1：創意內容 -->
+  <div class="pipeline" data-category="creative">
+    <div class="pipeline-header" onclick="togglePipeline(this)">
+      <span class="pipeline-emoji">✍️</span>
+      <span class="pipeline-title" style="color:var(--purple)">創意內容製作流水線</span>
+      <span class="pipeline-count">5 GEMS</span>
+      <span class="pipeline-chevron">▼</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="gem-node" onclick="openPanel('creative-idea')">
+        <div class="gem-chip" style="background:var(--purple-dim);border-color:rgba(167,139,250,.35);color:var(--purple)">創意連鎖發想專家</div>
+        <div class="gem-sub">腦暴起點</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('golden-quote')">
+        <div class="gem-chip" style="background:var(--purple-dim);border-color:rgba(167,139,250,.35);color:var(--purple)">金句生成專家</div>
+        <div class="gem-sub">提煉精華</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('narrative')">
+        <div class="gem-chip" style="background:var(--purple-dim);border-color:rgba(167,139,250,.35);color:var(--purple)">感性敘事金句優化</div>
+        <div class="gem-sub">加入溫度</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('manga-script')">
+        <div class="gem-chip" style="background:var(--purple-dim);border-color:rgba(167,139,250,.35);color:var(--purple)">創意漫畫腳本建築師</div>
+        <div class="gem-sub">具象分鏡</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('nonsense')">
+        <div class="gem-chip" style="background:var(--pink-dim);border-color:rgba(244,114,182,.35);color:var(--pink)">屁話文學大師</div>
+        <div class="gem-sub">幽默變體</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 流水線 2：視覺化 -->
+  <div class="pipeline" data-category="visual">
+    <div class="pipeline-header" onclick="togglePipeline(this)">
+      <span class="pipeline-emoji">🎨</span>
+      <span class="pipeline-title" style="color:var(--teal)">視覺化創作流水線</span>
+      <span class="pipeline-count">8 GEMS</span>
+      <span class="pipeline-chevron">▼</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="gem-node" onclick="openPanel('researcher')">
+        <div class="gem-chip" style="background:var(--teal-dim);border-color:rgba(52,211,153,.35);color:var(--teal)">深度研究分析師</div>
+        <div class="gem-sub">知識底層</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('physics-vis')">
+        <div class="gem-chip" style="background:var(--teal-dim);border-color:rgba(52,211,153,.35);color:var(--teal)">物理視覺化導師</div>
+        <div class="gem-sub">物理概念</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('bio-vis')">
+        <div class="gem-chip" style="background:var(--teal-dim);border-color:rgba(52,211,153,.35);color:var(--teal)">生物視覺化導師</div>
+        <div class="gem-sub">生物圖解</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('engineering-anim')">
+        <div class="gem-chip" style="background:var(--teal-dim);border-color:rgba(52,211,153,.35);color:var(--teal)">工程視覺化動畫專家</div>
+        <div class="gem-sub">動態呈現</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('minimal-image')">
+        <div class="gem-chip" style="background:var(--teal-dim);border-color:rgba(52,211,153,.35);color:var(--teal)">極簡影像生成專員</div>
+        <div class="gem-sub">生圖提詞</div>
+      </div>
+      <div class="arrow dashed">⤵</div>
+      <div class="gem-node" onclick="openPanel('poem-vis')">
+        <div class="gem-chip" style="background:rgba(14,143,101,.07);border-color:rgba(14,143,101,.25);color:#0a7a56">詩歌視覺化藝術家</div>
+        <div class="gem-sub">文字→圖像</div>
+      </div>
+      <div class="gem-node" onclick="openPanel('manga-char')">
+        <div class="gem-chip" style="background:rgba(14,143,101,.07);border-color:rgba(14,143,101,.25);color:#0a7a56">漫畫角色轉化繪師</div>
+        <div class="gem-sub">角色風格化</div>
+      </div>
+      <div class="gem-node" onclick="openPanel('char-design')">
+        <div class="gem-chip" style="background:rgba(14,143,101,.07);border-color:rgba(14,143,101,.25);color:#0a7a56">角色設定圖繪製大師</div>
+        <div class="gem-sub">人物設定</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 流水線 3：音樂 -->
+  <div class="pipeline" data-category="music">
+    <div class="pipeline-header" onclick="togglePipeline(this)">
+      <span class="pipeline-emoji">🎵</span>
+      <span class="pipeline-title" style="color:var(--amber)">音樂創作流水線</span>
+      <span class="pipeline-count">4 GEMS</span>
+      <span class="pipeline-chevron">▼</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="gem-node" onclick="openPanel('creative-idea')">
+        <div class="gem-chip" style="background:var(--amber-dim);border-color:rgba(251,191,36,.35);color:var(--amber)">歌曲主題發想</div>
+        <div class="gem-sub">創意連鎖</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('narrative')">
+        <div class="gem-chip" style="background:var(--amber-dim);border-color:rgba(251,191,36,.35);color:var(--amber)">歌詞文案敘事</div>
+        <div class="gem-sub">感性敘事</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('suno')">
+        <div class="gem-chip" style="background:var(--amber-dim);border-color:rgba(251,191,36,.35);color:var(--amber)">Suno AI 提示詞專家</div>
+        <div class="gem-sub">音樂生成</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('poem-vis')">
+        <div class="gem-chip" style="background:var(--amber-dim);border-color:rgba(251,191,36,.35);color:var(--amber)">MV 概念視覺化</div>
+        <div class="gem-sub">詩歌視覺化</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 流水線 4：語言角色 -->
+  <div class="pipeline" data-category="roleplay">
+    <div class="pipeline-header" onclick="togglePipeline(this)">
+      <span class="pipeline-emoji">🎭</span>
+      <span class="pipeline-title" style="color:var(--coral)">語言、思維與角色扮演流水線</span>
+      <span class="pipeline-count">6 GEMS</span>
+      <span class="pipeline-chevron">▼</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="gem-node" onclick="openPanel('mind-train')">
+        <div class="gem-chip" style="background:var(--coral-dim);border-color:rgba(251,113,133,.35);color:var(--coral)">思維重量訓練師</div>
+        <div class="gem-sub">邏輯鍛鍊</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('classic-poem')">
+        <div class="gem-chip" style="background:var(--coral-dim);border-color:rgba(251,113,133,.35);color:var(--coral)">古典詩詞白話翻譯</div>
+        <div class="gem-sub">語言橋接</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('sudongpo')">
+        <div class="gem-chip" style="background:var(--coral-dim);border-color:rgba(251,113,133,.35);color:var(--coral)">蘇東坡 2.1</div>
+        <div class="gem-sub">歷史角色</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('sunzi')">
+        <div class="gem-chip" style="background:var(--coral-dim);border-color:rgba(251,113,133,.35);color:var(--coral)">孫子兵法現代軍師</div>
+        <div class="gem-sub">策略角色</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('moon')">
+        <div class="gem-chip" style="background:var(--coral-dim);border-color:rgba(251,113,133,.35);color:var(--coral)">月球移民計劃</div>
+        <div class="gem-sub">科幻沉浸</div>
+      </div>
+      <div class="arrow dashed">⤵</div>
+      <div class="gem-node" onclick="openPanel('roast')">
+        <div class="gem-chip" style="background:rgba(184,58,140,.07);border-color:rgba(184,58,140,.25);color:#9a2a74">靈魂重擊吐槽大師</div>
+        <div class="gem-sub">幽默放鬆</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 流水線 5：技術工具 -->
+  <div class="pipeline" data-category="tech">
+    <div class="pipeline-header" onclick="togglePipeline(this)">
+      <span class="pipeline-emoji">🤖</span>
+      <span class="pipeline-title" style="color:var(--blue)">技術 &amp; 工具流水線</span>
+      <span class="pipeline-count">4 GEMS</span>
+      <span class="pipeline-chevron">▼</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="gem-node" onclick="openPanel('robot-arch')">
+        <div class="gem-chip" style="background:var(--blue-dim);border-color:rgba(96,165,250,.35);color:var(--blue)">機器人指令架構師</div>
+        <div class="gem-sub">Prompt 設計</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('researcher')">
+        <div class="gem-chip" style="background:var(--blue-dim);border-color:rgba(96,165,250,.35);color:var(--blue)">深度研究分析師</div>
+        <div class="gem-sub">資料蒐集</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('nutrition')">
+        <div class="gem-chip" style="background:var(--blue-dim);border-color:rgba(96,165,250,.35);color:var(--blue)">營養補充品分析師</div>
+        <div class="gem-sub">數據分析</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gem-node" onclick="openPanel('qrcode')">
+        <div class="gem-chip" style="background:var(--blue-dim);border-color:rgba(96,165,250,.35);color:var(--blue)">QR Code 快速生成</div>
+        <div class="gem-sub">工具輸出</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 跨流程組合 -->
+<div class="cross-section">
+  <div class="cross-title">// 跨流程超級協同組合</div>
+  <div class="cross-grid">
+    <div class="cross-card" onclick="openPanel('combo1')">
+      <div class="cross-card-title" style="color:var(--purple)">三合一創作組合</div>
+      <div class="cross-card-desc">機器人架構師 → 極簡影像生成 → Suno 音樂提示詞</div>
+    </div>
+    <div class="cross-card" onclick="openPanel('combo2')">
+      <div class="cross-card-title" style="color:var(--teal)">研究→金句→敘事→漫畫</div>
+      <div class="cross-card-desc">深度研究 → 金句生成 → 感性敘事 → 漫畫腳本四部曲</div>
+    </div>
+    <div class="cross-card" onclick="openPanel('combo3')">
+      <div class="cross-card-title" style="color:var(--amber)">古典跨媒體再創作</div>
+      <div class="cross-card-desc">詩詞翻譯 → 詩歌視覺化 → 角色設定 → 漫畫角色轉化</div>
+    </div>
+    <div class="cross-card" onclick="openPanel('combo4')">
+      <div class="cross-card-title" style="color:var(--coral)">時空旅行角色扮演</div>
+      <div class="cross-card-desc">思維訓練師 → 孫子兵法 → 蘇東坡 → 月球移民計劃</div>
+    </div>
+    <div class="cross-card" onclick="openPanel('combo5')">
+      <div class="cross-card-title" style="color:var(--blue)">建築教學三步驟</div>
+      <div class="cross-card-desc">建築分鏡 Prompt → 工程動畫 → 視覺化導師教學輸出</div>
+    </div>
+    <div class="cross-card" onclick="openPanel('combo6')">
+      <div class="cross-card-title" style="color:var(--pink)">爆笑到走心反差流程</div>
+      <div class="cross-card-desc">靈魂吐槽 → 屁話文學 → 金句生成 → 感性敘事收尾</div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<!-- Detail Panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header" style="position:relative">
+    <button class="panel-close" onclick="closePanel()">✕</button>
+    <div class="panel-badge" id="panelBadge">GEM</div>
+    <div class="panel-title" id="panelTitle">載入中…</div>
+    <div class="panel-desc" id="panelDesc"></div>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+  <div class="panel-footer">
+    <button class="open-gem-btn" id="openGemBtn" onclick="goToHub()">前往 GEM Hub 開啟工具 ↗</button>
+  </div>
+</div>
+
+<script>
+const GEM_DATA = {
+  'creative-idea': {
+    name: '創意連鎖發想專家',
+    category: '✍️ 創意文學',
+    color: '#a78bfa',
+    desc: '以連鎖思維激發源源不絕的創意靈感，是所有創作流水線的腦暴起點。',
+    input: '一個主題、問題或關鍵字',
+    output: '10+ 個聯想方向、創意概念樹、意外的靈感連結',
+    prompt: `我想針對「[主題]」進行創意連鎖發想。
+
+請幫我：
+1. 列出10個不同方向的創意切入點
+2. 為每個方向再延伸2個子想法
+3. 找出3個最出人意料的跨領域連結
+4. 推薦最有潛力的前3個方向並說明理由`,
+    tip: '把最意外的跨領域連結帶入下一步，往往是最有記憶點的內容。',
+  },
+  'golden-quote': {
+    name: '金句生成專家',
+    category: '✍️ 創意文學',
+    color: '#a78bfa',
+    desc: '創作打動人心、廣為流傳的金句語錄，是將研究論點變成傳播力的關鍵一步。',
+    input: '研究論點、核心概念、情感素材',
+    output: '開篇金句 ×1、段落金句 ×3、收尾金句 ×1',
+    prompt: `以下是關於「[主題]」的核心論點：
+[貼上研究內容]
+
+請生成：
+1. 開篇標題金句（讓人停下來的第一句話）
+2. 三個段落各一句金句（對應核心論點）
+3. 收尾金句（讓人回味、想分享）
+風格：中文、有力度、不說廢話、可以有點詩意
+請同時提供「激昂版」和「溫柔版」各一組`,
+    tip: '告訴 GEM「不要陳腔濫調」，並指定語氣（激昂、溫柔、反諷、犀利），輸出品質差很多。',
+  },
+  'narrative': {
+    name: '感性敘事與金句優化專家',
+    category: '✍️ 創意文學',
+    color: '#a78bfa',
+    desc: '優化文案情感共鳴與金句表達，把資訊加入人情溫度，變成真正打動人心的故事。',
+    input: '金句素材 + 情感切入角度',
+    output: '有起承轉合的敘事文本（200-300字），可直接用於旁白或字幕',
+    prompt: `主題：「[主題]」
+金句素材：[貼上金句]
+情感切入角度：[貼上情感素材]
+
+請編織成一段敘事文本：
+- 結構：開場衝擊 → 故事帶入 → 衝突高潮 → 餘韻收尾
+- 長度：約200-300字
+- 金句要自然融入，不能生硬
+- 目標讀者：一般大眾，不需要專業背景
+- 語氣：[溫暖/激昂/反諷，擇一]
+- 最後一句必須讓人想轉發`,
+    tip: '把「目標讀者」說清楚非常重要——同樣的內容給青少年和給職場人士，語氣會差距很大。',
+  },
+  'manga-script': {
+    name: '創意漫畫腳本建築師',
+    category: '✍️ 創意文學',
+    color: '#a78bfa',
+    desc: '構建引人入勝的漫畫故事結構與分格腳本，把文字敘事拆解為可繪製的畫面。',
+    input: '敘事文本（200-300字）',
+    output: '6-8格分鏡腳本：場景、角色動作、對白、鏡頭說明、情緒基調',
+    prompt: `請將以下敘事文本轉化為漫畫腳本：
+[貼上敘事文本]
+
+腳本格式（每格包含）：
+- 第N格：鏡頭類型（遠景/近景/特寫/俯角/仰角）
+- 場景描述：畫面中有什麼元素
+- 角色：表情、動作、姿態
+- 對白/旁白：框內文字（15字以內）
+- 情緒基調：這格給讀者的感受
+
+共規劃6-8格，要有強烈的視覺節奏感
+第1格必須讓讀者馬上被吸引
+最後一格必須是讓人印象深刻的收尾畫面`,
+    tip: '完成腳本後，可搭配「漫畫角色轉化繪師」把角色具象化，或搭配「建築施工分鏡圖Prompt專家」的邏輯生成 AI 繪圖提示詞。',
+  },
+  'nonsense': {
+    name: '屁話文學大師',
+    category: '✍️ 創意文學',
+    color: '#f472b6',
+    desc: '以高深文學語言包裝廢話的幽默創作者，適合社群輕鬆內容或為嚴肅主題加入笑點。',
+    input: '任何主題或日常小事',
+    output: '用哲學、文學、學術語言包裝的廢話金句',
+    prompt: `請以屁話文學大師的風格，針對「[主題/事件]」創作：
+
+1. 一段100字的哲學式廢話（聽起來很深刻但仔細看全是廢話）
+2. 3句可以截圖分享的「名言金句」
+3. 用學術論文的語氣寫一個關於這件事的廢話結論
+
+風格：語氣要非常莊重嚴肅，內容要極度日常無聊`,
+    tip: '最適合在正式創作完成後，用「屁話版」結尾，製造反差笑點；也很適合搭配「靈魂重擊吐槽大師」二重奏。',
+  },
+  'researcher': {
+    name: '專業深度研究分析師',
+    category: '🔍 研究分析',
+    color: '#34d399',
+    desc: '進行深度研究調查與資料分析，為創作提供紮實的知識底層與數據佐證。',
+    input: '研究主題或問題',
+    output: '核心論點 ×3、數據佐證、情感切入點、衝突張力分析',
+    prompt: `請針對「[主題]」進行深度研究，產出：
+
+1. 3個最具衝擊性的核心論點
+2. 每個論點配1-2個具體數據或真實案例
+3. 最能打動人心的情感切入角度
+4. 這個主題中最大的矛盾或衝突是什麼？
+5. 目前學界/業界對此議題最大的爭議點
+
+格式：條列清單，每點不超過80字
+同時標注：哪些論點適合理性受眾、哪些適合感性受眾`,
+    tip: '同時要求「理性論點」和「感性素材」，下一步的金句生成才有豐富素材可以提煉。',
+  },
+  'physics-vis': {
+    name: '物理視覺化導師',
+    category: '🎨 視覺化',
+    color: '#34d399',
+    desc: '讓抽象物理定律變得生動可視的教學夥伴，用直觀圖像解釋難懂概念。',
+    input: '物理概念或定律名稱',
+    output: '視覺化場景描述、AI 繪圖提示詞、動畫腳本說明',
+    prompt: `請幫我將「[物理概念]」視覺化，提供：
+
+1. 最直觀的視覺比喻（用生活中的物品/場景來類比）
+2. 一段描述靜態圖像的文字（可用於AI繪圖）
+3. 如果做成動畫，關鍵的3個動作幀是什麼？
+4. 適合哪個年齡層？需要調整哪些部分？
+
+目標：讓沒有物理背景的人，30秒內理解這個概念`,
+    tip: '搭配「工程視覺化與動力學動畫專家」可以進一步把靜態視覺化升級為動態動畫腳本。',
+  },
+  'bio-vis': {
+    name: '生物視覺化導師',
+    category: '🎨 視覺化',
+    color: '#34d399',
+    desc: '將生物學概念轉化為直觀視覺圖像的教學助手，讓複雜的生命科學一眼看懂。',
+    input: '生物概念、細胞機制、生態關係',
+    output: '視覺化圖解說明、教學插圖概念、AI繪圖提示詞',
+    prompt: `請將「[生物概念]」設計成視覺化教學圖解：
+
+1. 用簡單圖形（圓、方、箭頭）描述整體結構
+2. 每個關鍵部位的顏色建議和視覺意義
+3. 寫一段給AI繪圖工具的提示詞（英文）
+4. 這個概念最常被誤解的地方，如何在圖中避免誤導？
+
+風格：教科書插圖風格，清晰優先於美觀`,
+    tip: '可以把輸出的英文提示詞直接丟給「極簡影像生成專員」或「漫畫角色轉化繪師」進行風格轉換。',
+  },
+  'engineering-anim': {
+    name: '工程視覺化與動力學動畫專家',
+    category: '🎨 視覺化',
+    color: '#34d399',
+    desc: '將工程機械原理轉化為動態視覺動畫，讓機械運動原理變得清晰易懂。',
+    input: '工程機構名稱或運動原理',
+    output: '動畫腳本、關鍵幀描述、物理參數說明',
+    prompt: `請為「[工程機構/原理]」設計動畫腳本：
+
+1. 靜態初始畫面的構成元素
+2. 動畫的3-5個關鍵幀（描述每個時間點發生什麼）
+3. 哪些部位需要用不同顏色標示？
+4. 需要顯示哪些物理量（速度、力、角度）？
+5. 最後一幀：把原理用一句話總結顯示在畫面上
+
+適用：教學影片、產品說明書、科普內容`,
+    tip: '完成腳本後搭配「建築施工分鏡圖Prompt生成專家」的邏輯，可以把動畫腳本轉換成逐幀的AI繪圖提示詞。',
+  },
+  'minimal-image': {
+    name: '極簡影像生成專員',
+    category: '🎨 視覺化',
+    color: '#34d399',
+    desc: '以極簡風格生成精準影像的創作助手，專門優化 Midjourney / DALL-E 提示詞。',
+    input: '想要生成的畫面描述或概念',
+    output: '優化後的英文提示詞、風格參數、尺寸建議',
+    prompt: `我想生成「[畫面概念]」的極簡風格圖像。
+
+請提供：
+1. Midjourney 提示詞（英文，包含風格關鍵字）
+2. DALL-E 提示詞版本（語氣更自然）
+3. 3個風格變體方向（如：日系插畫/歐洲扁平/水彩手繪）
+4. 建議使用的長寬比和解析度
+5. 需要避免的常見生成錯誤
+
+格式：直接給可複製的完整提示詞`,
+    tip: '把「建築施工分鏡圖Prompt生成專家」的輸出當成素材輸入，可以生成更具專業感的建築視覺化圖像。',
+  },
+  'poem-vis': {
+    name: '詩歌視覺化藝術家',
+    category: '🎨 視覺化',
+    color: '#6ee7b7',
+    desc: '將詩歌意境轉化為美麗視覺圖像的藝術創作者，讓文字變成可見的畫面。',
+    input: '詩句、歌詞、或有詩意的短文',
+    output: '視覺意象描述、AI繪圖提示詞、色彩情緒建議',
+    prompt: `請為以下詩句/歌詞設計視覺化方案：
+「[詩句內容]」
+
+1. 這句話最核心的視覺意象是什麼？
+2. 設計一個象徵性畫面（不要字面直譯）
+3. 色彩方案：主色調、輔助色、情緒意義
+4. 寫一段Midjourney提示詞（英文）
+5. 如果做成動態視覺，最關鍵的動作是什麼？`,
+    tip: '最適合接在「感性敘事金句優化」之後，把文字輸出轉換為視覺輸出，形成完整的圖文創作組合。',
+  },
+  'manga-char': {
+    name: '漫畫角色轉化繪師',
+    category: '🎨 視覺化',
+    color: '#6ee7b7',
+    desc: '將任何角色轉化為不同漫畫風格的繪圖助手，支援多種風格轉換。',
+    input: '角色描述或現有圖像描述',
+    output: '各漫畫風格的角色設計說明、AI繪圖提示詞',
+    prompt: `請將以下角色轉化為漫畫風格：
+角色描述：[描述外觀、個性、故事背景]
+
+請提供以下風格的轉化方案：
+1. 日系少年漫（高對比、動感線條）
+2. 歐美漫畫風（寫實比例、厚塗陰影）
+3. 療癒系插畫（圓潤輪廓、柔和色彩）
+
+每種風格提供：
+- 外觀調整建議
+- Midjourney提示詞（英文）
+- 最能凸顯角色性格的一個關鍵設計元素`,
+    tip: '搭配「創意漫畫腳本建築師」效果最佳——先有腳本，再把角色具象化，才能確保視覺和故事方向一致。',
+  },
+  'char-design': {
+    name: '專業角色設定圖繪製大師',
+    category: '🎨 視覺化',
+    color: '#6ee7b7',
+    desc: '繪製精緻角色設定圖與人物造型設計的專業助手，適合遊戲、動漫、影視前期製作。',
+    input: '角色基本資料（名字、職業、個性、故事背景）',
+    output: '完整角色設定說明書、正面/側面/背面設計建議、AI繪圖提示詞組',
+    prompt: `請為以下角色製作完整設定圖說明書：
+
+角色名稱：[名稱]
+職業/身份：[職業]
+個性特質：[3個關鍵詞]
+故事背景：[簡述]
+世界觀設定：[時代背景]
+
+請提供：
+1. 外觀設計（頭到腳的詳細描述）
+2. 服裝設計邏輯（為什麼穿這樣？）
+3. 標誌性動作/姿勢建議
+4. 三視圖AI繪圖提示詞（正面、側面、3/4角度）
+5. 表情包：5種表情的描述`,
+    tip: '完成角色設定後，搭配「漫畫角色轉化繪師」可以快速生成不同風格版本，用於測試哪種視覺風格最適合你的故事。',
+  },
+  'suno': {
+    name: 'Suno AI 音樂提示詞生成專家',
+    category: '🎵 音樂',
+    color: '#fbbf24',
+    desc: '為 Suno AI 生成最佳化音樂創作提示詞，從歌詞、曲風到情感設定一次完成。',
+    input: '音樂主題、情感方向、目標聽眾',
+    output: 'Suno prompt（含曲風標籤、情感描述、結構說明）、歌詞草稿',
+    prompt: `我想用Suno AI創作一首關於「[主題]」的歌曲。
+
+請提供：
+1. Suno Style Prompt（英文標籤，如 style, mood, instruments）
+2. 完整歌詞草稿（含主歌、副歌、橋段）
+3. 3個不同曲風方向（如：indie folk / electronic pop / jazz）
+4. 最適合這個主題的BPM範圍是多少？
+5. 如果要有中文歌詞，哪些句子最適合保留中文？
+
+目標：生成第一次就接近心目中聲音的音樂`,
+    tip: '把「感性敘事金句優化」的敘事文本直接貼給這個 GEM，讓歌詞和文案保持同一情感頻率。',
+  },
+  'mind-train': {
+    name: '思維重量訓練師',
+    category: '💪 思維訓練',
+    color: '#fb7185',
+    desc: '鍛鍊思辨能力與邏輯思維的腦力訓練教練，讓你的論點更有深度和說服力。',
+    input: '想要深化思考的議題或論點',
+    output: '反向論點挑戰、邏輯漏洞分析、強化論述建議',
+    prompt: `我對「[議題]」的立場是：[你的觀點]
+
+請幫我：
+1. 找出我這個論點最大的3個邏輯漏洞
+2. 如果有人要反駁我，他們最強的論點是什麼？
+3. 如何回應這些反駁？
+4. 我還需要補充哪些證據才能讓論點更完整？
+5. 這個議題中，什麼是我可能帶有偏見而沒有看到的？
+
+目的：讓我的觀點更全面、更有說服力`,
+    tip: '先用這個 GEM 強化你的思考，再交給「深度研究分析師」找數據佐證，最後用「金句生成專家」提煉成傳播力強的觀點。',
+  },
+  'classic-poem': {
+    name: '古典詩詞白話翻譯專家',
+    category: '📜 語言',
+    color: '#fb7185',
+    desc: '將古典詩詞精準翻譯為現代白話文，保留詩意同時讓現代人真正理解。',
+    input: '古詩詞原文或詩人作品',
+    output: '白話翻譯、字義解說、時代背景、現代意義延伸',
+    prompt: `請翻譯並深度解析以下古典詩詞：
+「[詩詞原文]」
+
+請提供：
+1. 逐句白話翻譯（保留詩意，不要太白話）
+2. 3個關鍵意象的文化背景解說
+3. 詩人當時的心境與時代背景（100字）
+4. 這首詩放在現代社會，最能對應什麼情境？
+5. 把這首詩的核心情感，改寫成現代人能轉發的一句話`,
+    tip: '翻譯完成後，把「現代應用情境」那段交給「感性敘事金句優化」再創作，就能把古詩詞轉化為現代文案素材。',
+  },
+  'sudongpo': {
+    name: '蘇東坡 2.1',
+    category: '🎭 角色扮演',
+    color: '#fb7185',
+    desc: '與北宋文豪蘇東坡展開跨時空的文學對話，獲得古今交融的人生智慧。',
+    input: '你想和蘇東坡討論的人生問題或文學議題',
+    output: '蘇東坡視角的回應、引用其作品的觀點、跨時空的人生建議',
+    prompt: `我想請蘇東坡先生給我一些建議：
+
+我目前的困境/問題：[描述你的狀況]
+
+請以蘇東坡的口吻回應：
+1. 引用他的某首詩或詞作為開場
+2. 以他的人生經歷（黃州貶謫、詩酒文章）為例說明如何面對
+3. 給我3個具體的建議（蘇東坡式的曠達精神）
+4. 最後用一首即興的七言絕句作結
+
+語氣：文雅但不古板，要讓現代人感受到溫度`,
+    tip: '先用「古典詩詞白話翻譯專家」熱身，了解蘇東坡的代表作品，再和他對話，會有更深的共鳴。',
+  },
+  'sunzi': {
+    name: '孫子兵法現代軍師',
+    category: '🎭 角色扮演',
+    color: '#fb7185',
+    desc: '以古代兵法智慧解析現代商業與人生策略，讓千年前的兵法照進當代決策。',
+    input: '你面對的商業挑戰、競爭情況或人生決策',
+    output: '孫子兵法對應篇章、策略分析、3個行動建議',
+    prompt: `我面對以下情況需要策略建議：
+[描述你的競爭情況/商業挑戰/人生決策]
+
+請以孫子兵法的智慧分析：
+1. 這個情況對應《孫子兵法》哪一篇的核心概念？
+2. 原文引用 + 白話解釋（2-3句）
+3. 我的「知己」分析：我的優勢和劣勢各是什麼？
+4. 我的「知彼」分析：對方/環境的弱點在哪？
+5. 具體的3步行動策略
+
+目標：把古代兵法智慧轉化為今天可以執行的行動`,
+    tip: '把策略分析結果交給「思維重量訓練師」做壓力測試，確認有沒有邏輯漏洞，再付諸執行。',
+  },
+  'moon': {
+    name: '月球移民計劃',
+    category: '🎭 角色扮演',
+    color: '#fb7185',
+    desc: '探索人類在月球建立文明的科幻沉浸式體驗，創作或探索未來人類的命運。',
+    input: '你的角色設定或想探討的月球文明議題',
+    output: '沉浸式場景敘述、角色互動、科幻世界觀建構',
+    prompt: `月球移民計劃：第[數字]年
+
+我的角色設定：[描述你的身份，如：工程師/醫生/作家/政治家]
+我想探討的議題：[如：月球政府的組成/資源分配/與地球的關係/文化認同]
+
+請幫我：
+1. 描述我所在的月球基地現況（感官細節：看到什麼、聽到什麼、聞到什麼）
+2. 製造一個需要我的角色出面解決的衝突情境
+3. 給我3個可以選擇的行動方向
+4. 這個決策將如何影響月球文明的未來走向？`,
+    tip: '這個 GEM 產生的世界觀素材，非常適合交給「創意漫畫腳本建築師」轉化為科幻漫畫分鏡。',
+  },
+  'roast': {
+    name: '靈魂重擊吐槽大師',
+    category: '✍️ 創意文學',
+    color: '#f472b6',
+    desc: '以犀利幽默語言吐槽一切荒謬事物的毒舌大師，為嚴肅創作提供解壓出口。',
+    input: '任何讓你覺得荒謬、可笑或無奈的事物',
+    output: '犀利但有見地的吐槽段子、幽默分析、反諷金句',
+    prompt: `請用靈魂重擊吐槽大師的風格，對「[主題/現象]」進行吐槽：
+
+1. 開場白：用一句話精準戳到痛點
+2. 三段式吐槽（表象→本質→更荒謬的本質）
+3. 看似批評實則暗藏溫度的收尾
+4. 3句可截圖的毒舌金句
+
+風格要求：犀利但有智識含量，不是謾罵，是讓人笑完之後會思考的那種`,
+    tip: '吐槽完之後，把核心觀點交給「感性敘事金句優化」做情感升華——從諷刺到走心的反差效果極強。',
+  },
+  'robot-arch': {
+    name: '機器人指令架構師',
+    category: '🤖 技術',
+    color: '#60a5fa',
+    desc: '設計精準 AI 系統提示詞與指令架構的技術專家，讓你的 Prompt 從模糊變精確。',
+    input: '你想要 AI 做到的任務描述（可以很粗糙）',
+    output: '結構化系統提示詞、角色定義、任務邊界說明、輸出格式規範',
+    prompt: `我想設計一個AI助理，用途如下：
+目標任務：[描述你想讓AI做什麼]
+目標用戶：[誰會使用這個AI？]
+期望輸出格式：[列點/段落/表格/JSON…]
+不希望AI做的事：[禁忌和邊界]
+
+請幫我：
+1. 設計系統提示詞（System Prompt）框架
+2. 給出3個測試案例和預期回應
+3. 找出這個設計的潛在漏洞
+4. 如何讓這個AI保持一致性？`,
+    tip: '先用這個 GEM 設計好 Prompt 框架，再去建立你的 Gemini GEM 或 ChatGPT GPT，成功率高很多。',
+  },
+  'nutrition': {
+    name: '專業營養補充品資料分析師',
+    category: '🤖 技術',
+    color: '#60a5fa',
+    desc: '分析營養補充品成分、功效與安全性的專業助手，讓你做出有依據的健康決策。',
+    input: '產品名稱、成分表或上傳圖片',
+    output: '成分解析、功效評估、潛在風險、替代方案建議',
+    prompt: `請分析以下營養補充品：
+產品名稱：[名稱]
+成分表：[貼上成分]
+我的目的：[為什麼想使用？]
+我的狀況：[年齡/特殊需求/現有用藥]
+
+請提供：
+1. 主要成分的科學實證（哪些有效、哪些噱頭）
+2. 這個劑量是否合理？是否超標？
+3. 與常見藥物的交互作用風險
+4. CP值分析：有沒有更好的替代方案？
+5. 建議的服用時機和方式`,
+    tip: '可以直接上傳產品包裝照片給這個 GEM，它能從圖片中提取成分資訊進行分析。',
+  },
+  'qrcode': {
+    name: 'QR Code 快速生成專家',
+    category: '🛠️ 工具',
+    color: '#60a5fa',
+    desc: '快速生成各種用途 QR Code 的實用工具，並提供設計建議和用途說明。',
+    input: 'URL、文字、聯絡資訊或任何想編碼的內容',
+    output: 'QR Code 生成指引、設計建議、用途最佳化建議',
+    prompt: `我需要生成一個QR Code，用途如下：
+內容：[URL/文字/電話/Email/WiFi資訊]
+使用場景：[名片/海報/包裝/展覽/投影片]
+印刷大小：[約幾公分？]
+品牌顏色：[如果有的話]
+
+請提供：
+1. 最適合這個用途的QR Code類型（靜態/動態）
+2. 最小可辨識尺寸建議
+3. 色彩設計建議（深色碼 + 淺色底的最佳組合）
+4. 需要加Error Correction Level到多高？
+5. 推薦的生成工具（免費/付費）`,
+    tip: '搭配「機器人指令架構師」設計的連結頁面，讓 QR Code 落地頁也有完整的互動設計。',
+  },
+  'combo1': {
+    name: '三合一創作組合',
+    category: '🔗 跨流程組合',
+    color: '#a78bfa',
+    desc: '機器人架構師設計指令框架 → 極簡影像生成專員生成視覺 → Suno AI 提示詞配上音樂，打造完整的多媒體創作包。',
+    input: '一個品牌概念或創作主題',
+    output: '系統化的多媒體創作包：視覺概念 + AI生圖提示詞 + 音樂提示詞',
+    prompt: `我想為「[主題/品牌/活動]」打造一套多媒體創作包。
+
+第一步（機器人架構師）：
+設計一個AI創作助理，能保持這個主題的一致風格和調性
+
+第二步（極簡影像生成）：
+產出3個不同場景的視覺圖像提示詞
+
+第三步（Suno AI提示詞）：
+產出搭配這個視覺風格的背景音樂提示詞
+
+最終交付：一份完整的創作風格指南`,
+    tip: '這個組合特別適合為活動、品牌或產品快速建立視覺和音樂識別系統。',
+  },
+  'combo2': {
+    name: '研究→金句→敘事→漫畫四部曲',
+    category: '🔗 跨流程組合',
+    color: '#34d399',
+    desc: '深度研究建立知識底層 → 金句提煉傳播力 → 感性敘事加入溫度 → 漫畫腳本視覺化，是最完整的內容創作流水線。',
+    input: '任何你想深度創作的主題',
+    output: '從研究報告到可繪製漫畫腳本的完整內容包',
+    prompt: `「[主題]」四部曲創作計劃：
+
+Step 1 → 深度研究分析師：
+產出3個核心論點＋數據＋情感切入點
+
+Step 2 → 金句生成專家：
+把論點提煉成5句高傳播力金句
+
+Step 3 → 感性敘事金句優化：
+編織成200字有起承轉合的敘事文本
+
+Step 4 → 創意漫畫腳本建築師：
+拆解為6-8格分鏡腳本
+
+每步驟的輸出直接作為下一步的輸入`,
+    tip: '這四步驟是這個 GEM Hub 的核心流水線，建議先選定一個你真正有熱情的主題，完整走一遍。',
+  },
+  'combo3': {
+    name: '古典跨媒體再創作',
+    category: '🔗 跨流程組合',
+    color: '#fbbf24',
+    desc: '把古典詩詞從文字翻譯 → 視覺化設計 → 角色設定 → 漫畫風格轉化，讓千年前的文學以現代媒體形式重生。',
+    input: '一首古詩詞',
+    output: '古詩詞的現代多媒體創作包',
+    prompt: `我想讓「[古詩詞名稱]」以現代媒體形式重生：
+
+Step 1 → 古典詩詞白話翻譯：
+翻譯＋解析＋現代情境對應
+
+Step 2 → 詩歌視覺化藝術家：
+把詩的意境轉化為視覺圖像方案
+
+Step 3 → 專業角色設定圖繪製大師：
+如果詩中有人物，設計他的現代版角色
+
+Step 4 → 漫畫角色轉化繪師：
+把角色轉化為不同漫畫風格`,
+    tip: '蘇東坡的詩詞搭配「蘇東坡2.1」角色扮演GEM一起用，效果特別好。',
+  },
+  'combo4': {
+    name: '時空旅行角色扮演',
+    category: '🔗 跨流程組合',
+    color: '#fb7185',
+    desc: '從思維訓練強化邏輯 → 古今策略家對話 → 歷史文人問道 → 科幻未來想像，一次體驗橫跨千年的思想旅行。',
+    input: '一個你想深度思考的人生或社會議題',
+    output: '從古到今到未來的多視角思考報告',
+    prompt: `我想從多個時代視角思考「[議題]」：
+
+Step 1 → 思維重量訓練師：
+找出我對這個議題的邏輯漏洞
+
+Step 2 → 孫子兵法現代軍師：
+用兵法智慧分析策略
+
+Step 3 → 蘇東坡2.1：
+從文人曠達的角度給人生建議
+
+Step 4 → 月球移民計劃：
+如果人類移民月球後，這個議題會如何演變？
+
+最終：整合四個視角，形成你自己的綜合觀點`,
+    tip: '這個組合特別適合面對重大人生決策時使用——從邏輯、策略、感性、到未來視角，全面覆蓋。',
+  },
+  'combo5': {
+    name: '建築視覺化教學三步驟',
+    category: '🔗 跨流程組合',
+    color: '#60a5fa',
+    desc: '建築施工分鏡Prompt生成 → 工程動畫腳本 → 視覺化導師教學輸出，打造專業的建築教學內容。',
+    input: '一個建築工法或施工階段',
+    output: '完整的建築教學視覺化內容包',
+    prompt: `我想製作「[建築工法/結構]」的教學視覺化內容：
+
+Step 1 → 建築施工分鏡圖Prompt生成專家：
+把施工過程拆解為AI繪圖提示詞
+
+Step 2 → 工程視覺化與動力學動畫專家：
+設計關鍵施工節點的動畫腳本
+
+Step 3 → 物理視覺化導師：
+用最直觀的比喻解釋結構力學原理
+
+最終：整合成一套可用於教學或業主說明的視覺化資料`,
+    tip: '完成後可以用「深度研究分析師」補充工法的技術規範和案例，讓教學內容更有深度。',
+  },
+  'combo6': {
+    name: '爆笑到走心反差流程',
+    category: '🔗 跨流程組合',
+    color: '#f472b6',
+    desc: '從靈魂吐槽開始 → 升級為屁話文學 → 提煉成金句 → 最後以感性敘事收尾，製造強烈的情緒反差效果。',
+    input: '任何社會現象或生活觀察',
+    output: '先讓人大笑、再讓人沉默的神反差創作',
+    prompt: `針對「[社會現象/生活觀察]」的反差創作：
+
+Step 1 → 靈魂重擊吐槽大師：
+用最犀利的方式吐槽這個現象
+
+Step 2 → 屁話文學大師：
+把吐槽升級為哲學式廢話文學
+
+Step 3 → 金句生成專家：
+從廢話中提煉出真正有力量的金句
+
+Step 4 → 感性敘事金句優化：
+用溫柔的語氣重新包裝，讓人看完想哭
+
+最終效果：同一個主題，從讓人大笑到讓人沉默`,
+    tip: '這個流程產生的內容特別適合社群平台——開頭用吐槽吸引點擊，結尾用溫度留住讀者。',
+  },
+};
+
+let currentPanel = null;
+
+function openPanel(id) {
+  const data = GEM_DATA[id];
+  if (!data) return;
+  currentPanel = id;
+
+  const badge = document.getElementById('panelBadge');
+  const title = document.getElementById('panelTitle');
+  const desc = document.getElementById('panelDesc');
+  const body = document.getElementById('panelBody');
+  const btn = document.getElementById('openGemBtn');
+
+  badge.textContent = data.category;
+  badge.style.color = data.color;
+  badge.style.borderColor = data.color + '60';
+  badge.style.background = data.color + '15';
+
+  title.textContent = data.name;
+  title.style.color = data.color;
+  desc.textContent = data.desc;
+
+  body.innerHTML = `
+    <div>
+      <div class="panel-section-title">輸入 / 輸出</div>
+      <div class="io-row">
+        <div class="io-box">
+          <div class="io-label">輸入</div>
+          <div class="io-text">${data.input}</div>
+        </div>
+        <div class="io-box">
+          <div class="io-label">輸出</div>
+          <div class="io-text">${data.output}</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-section-title">提示詞模板</div>
+      <div class="prompt-area">
+        <pre class="prompt-text" id="promptText">${data.prompt}</pre>
+        <button class="copy-btn" id="copyBtn" onclick="copyPromptText()">複製</button>
+      </div>
+    </div>
+    <div>
+      <div class="panel-section-title">使用訣竅</div>
+      <div class="tips-box">${data.tip}</div>
+    </div>
+  `;
+
+  btn.style.background = data.color;
+  btn.style.color = '#ffffff';
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('detailPanel').classList.remove('open');
+  currentPanel = null;
+}
+
+function copyPromptText() {
+  const text = document.getElementById('promptText').textContent;
+  navigator.clipboard.writeText(text).catch(() => {});
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '已複製 ✓';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '複製'; btn.classList.remove('copied'); }, 1800);
+}
+
+function goToHub() {
+  window.open('https://maskywg.github.io/my-gems/', '_blank');
+}
+
+function togglePipeline(header) {
+  header.closest('.pipeline').classList.toggle('collapsed');
+}
+
+function filterPipeline(cat, el) {
+  document.querySelectorAll('.legend-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.pipeline').forEach(p => {
+    if (cat === 'all' || p.dataset.category === cat) {
+      p.classList.remove('hidden');
+    } else {
+      p.classList.add('hidden');
+    }
+  });
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+</script>
+</body>
+</html>
