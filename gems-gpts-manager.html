@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的 Gems & GPTs 收藏</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f2f5;color:#1a1a1a;min-height:100vh}
+
+/* ── Header ── */
+header{background:linear-gradient(135deg,#6c63ff,#9b59b6);padding:1.5rem 1rem 1.2rem;text-align:center}
+header h1{font-size:1.6rem;font-weight:700;color:#fff;margin-bottom:.2rem}
+header p{color:rgba(255,255,255,.85);font-size:.88rem}
+.back-link{display:inline-flex;align-items:center;gap:.35rem;color:#fff;text-decoration:none;font-size:.8rem;font-weight:700;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:.38rem .8rem;margin-bottom:.8rem;background:rgba(255,255,255,.12);transition:all .2s}
+.back-link:hover{background:rgba(255,255,255,.2);transform:translateX(-2px)}
+
+/* ── 警告條 ── */
+#warnBar{display:none;background:#fff3cd;border-bottom:2px solid #ffc107;color:#856404;text-align:center;padding:.7rem 1rem;font-size:.85rem;font-weight:500}
+
+/* ── 新增區塊 ── */
+.add-box{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:1.4rem;margin:1.2rem auto;max-width:700px}
+.add-box h2{font-size:.95rem;font-weight:700;color:#333;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+
+/* URL 輸入列 */
+.url-row{display:flex;gap:.6rem;align-items:stretch;margin-bottom:.75rem}
+.url-row input{flex:1;border:2px solid #ddd;border-radius:10px;padding:.7rem 1rem;font-size:.95rem;outline:none;color:#1a1a1a;transition:border-color .2s}
+.url-row input:focus{border-color:#6c63ff}
+.url-row input::placeholder{color:#aaa}
+.btn-open-page{background:#f0f2f5;border:2px solid #ddd;border-radius:10px;padding:.7rem 1rem;font-size:.85rem;font-weight:600;color:#555;cursor:pointer;white-space:nowrap;transition:all .2s}
+.btn-open-page:hover{background:#e0e0e0;border-color:#6c63ff;color:#6c63ff}
+
+/* 辨識結果區 */
+#detectResult{display:none;background:#f6f0ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:.9rem 1rem;margin-bottom:.75rem}
+#detectResult .dr-label{font-size:.72rem;font-weight:700;color:#6c63ff;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em}
+#detectResult .dr-name{font-size:1rem;font-weight:700;color:#1a1a1a;margin-bottom:.3rem}
+#detectResult .dr-url{font-size:.75rem;color:#888;word-break:break-all}
+#detectResult .dr-cat{display:inline-block;font-size:.72rem;font-weight:600;padding:.15rem .6rem;border-radius:20px;margin-top:.4rem}
+
+/* 詳細欄位 */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.85rem}
+.fields .full{grid-column:1/-1}
+label{font-size:.78rem;font-weight:600;color:#555;display:block;margin-bottom:.3rem}
+input[type=text],select,textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:.6rem .8rem;font-size:.88rem;color:#1a1a1a;outline:none;transition:border-color .2s;font-family:inherit;background:#fff}
+input[type=text]:focus,select:focus,textarea:focus{border-color:#6c63ff}
+textarea{resize:vertical;min-height:56px}
+
+.row-btns{display:flex;gap:.6rem;justify-content:flex-end}
+.btn{padding:.6rem 1.3rem;border:none;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-main{background:linear-gradient(135deg,#6c63ff,#9b59b6);color:#fff}
+.btn-main:hover{opacity:.88;transform:translateY(-1px)}
+.btn-gray{background:#efefef;color:#555}
+.btn-gray:hover{background:#e0e0e0}
+
+/* ── 書籤教學 ── */
+.bookmarklet-box{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:1.2rem 1.4rem;margin:0 auto 1.2rem;max-width:700px}
+.bookmarklet-box h3{font-size:.88rem;font-weight:700;color:#333;margin-bottom:.9rem}
+.steps{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem}
+.step{background:#f6f0ff;border-radius:10px;padding:.6rem .8rem;font-size:.8rem;color:#333;flex:1;min-width:130px;text-align:center;line-height:1.5}
+.step b{display:block;color:#6c63ff;font-size:.72rem;margin-bottom:.2rem}
+.bookmarklet-btn-wrap{text-align:center;margin-bottom:.6rem}
+#bookmarkletBtn{display:inline-block;background:linear-gradient(135deg,#6c63ff,#9b59b6);color:#fff;font-size:.88rem;font-weight:700;padding:.6rem 1.4rem;border-radius:10px;text-decoration:none;cursor:grab;user-select:none}
+.bookmarklet-hint{text-align:center;font-size:.75rem;color:#888;line-height:1.6}
+.bookmarklet-hint strong{color:#6c63ff}
+
+/* ── 搜尋 & 篩選 ── */
+.toolbar{max-width:700px;margin:0 auto .8rem;padding:0 .5rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.toolbar input{flex:1;min-width:160px;border:1.5px solid #ddd;border-radius:10px;padding:.55rem .9rem .55rem 2.2rem;font-size:.88rem;color:#1a1a1a;outline:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='%23aaa' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.867-3.834zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat .7rem center;transition:border-color .2s}
+.toolbar input:focus{border-color:#6c63ff}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap}
+.tab{padding:.38rem .85rem;border-radius:20px;border:1.5px solid #ddd;background:#fff;color:#666;font-size:.82rem;cursor:pointer;transition:all .2s;font-weight:500}
+.tab:hover{border-color:#6c63ff;color:#6c63ff}
+.tab.active{background:#6c63ff;border-color:#6c63ff;color:#fff}
+
+/* ── 卡片區 ── */
+#main{max-width:700px;margin:0 auto;padding:0 .5rem 4rem}
+.sec-title{font-size:.85rem;font-weight:700;color:#555;margin:1.2rem 0 .6rem;display:flex;align-items:center;gap:.5rem}
+.sec-count{background:#e8e8e8;color:#777;font-size:.7rem;padding:.1rem .45rem;border-radius:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.7rem}
+.card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:.9rem;display:flex;flex-direction:column;gap:.4rem;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.card:hover{border-color:#6c63ff;box-shadow:0 4px 16px rgba(108,99,255,.12);transform:translateY(-2px)}
+.badge{display:inline-flex;align-items:center;gap:.25rem;font-size:.7rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;width:fit-content}
+.b-gems{background:#e6f4ea;color:#1e7e34}
+.b-gpts{background:#e3f2fd;color:#1565c0}
+.b-other{background:#f3e5f5;color:#7b1fa2}
+.card-name{font-size:.92rem;font-weight:700;color:#1a1a1a;word-break:break-word}
+.card-desc{font-size:.78rem;color:#888;flex:1;line-height:1.5;word-break:break-word}
+.card-url{font-size:.7rem;color:#9b59b6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-actions{display:flex;gap:.4rem;margin-top:.2rem}
+.card-actions a,.card-actions button{flex:1;text-align:center;padding:.38rem;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:opacity .2s}
+.card-actions a:hover,.card-actions button:hover{opacity:.75}
+.ca-open{background:linear-gradient(135deg,#6c63ff,#9b59b6);color:#fff!important}
+.ca-edit{background:#f0f0f0;color:#555}
+.ca-del{background:#fdecea;color:#c62828}
+
+/* 空狀態 */
+.empty{text-align:center;padding:3rem 1rem;color:#bbb}
+.empty .ei{font-size:2.5rem;margin-bottom:.5rem}
+
+/* ── Edit Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:1.4rem;width:100%;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.modal h3{font-size:.95rem;font-weight:700;color:#333;margin-bottom:1rem}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(16px);background:#333;color:#fff;border-radius:10px;padding:.65rem 1.2rem;font-size:.85rem;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:500px){
+  .fields{grid-template-columns:1fr}
+  .fields .full{grid-column:1}
+  .cards{grid-template-columns:1fr}
+  .steps{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="warnBar">⚠ 此環境封鎖了儲存功能，請用瀏覽器直接開啟此 HTML 檔案才能正常使用。</div>
+
+<header>
+  <a class="back-link" href="GEMmaking.html">← 回到 Gem 實戰教學指南</a>
+  <h1>✦ 我的 Gems & GPTs 收藏</h1>
+  <p>集中管理你建立的 AI 工具，快速連結使用</p>
+</header>
+
+<!-- ── 新增工具 ── -->
+<div class="add-box" style="margin-top:1.2rem">
+  <h2>➕ 新增工具</h2>
+
+  <!-- Step 1：貼網址 -->
+  <label style="margin-bottom:.5rem">① 貼上 Gem 或 GPT 的網址</label>
+  <div class="url-row">
+    <input type="text" id="iUrl" placeholder="https://gemini.google.com/gem/… 或 https://chatgpt.com/g/…" autocomplete="off">
+    <button class="btn-open-page" id="openPageBtn" onclick="openPage()" style="display:none" title="開啟頁面複製名稱">🔗 開啟頁面</button>
+  </div>
+  <div id="openPageHint" style="display:none;font-size:.78rem;color:#888;margin-top:-.4rem;margin-bottom:.6rem">
+    👆 點「開啟頁面」→ 在新分頁複製 Gem 名稱 → 回來貼到「工具名稱」欄
+  </div>
+
+  <!-- 辨識結果 -->
+  <div id="detectResult">
+    <div class="dr-label" id="drLabel">✓ 已自動辨識</div>
+    <div class="dr-name" id="drName">—</div>
+    <div class="dr-url" id="drUrl"></div>
+    <span class="dr-cat" id="drCat"></span>
+  </div>
+
+  <!-- Step 2：確認填寫 -->
+  <label style="margin-bottom:.5rem;margin-top:.1rem">② 確認名稱與分類，按「儲存」完成</label>
+  <div class="fields">
+    <div>
+      <label>名稱 *</label>
+      <input type="text" id="iName" placeholder="工具名稱">
+    </div>
+    <div>
+      <label>分類</label>
+      <select id="iCat">
+        <option value="gems">✦ Google Gems</option>
+        <option value="gpts">⚡ ChatGPT GPTs</option>
+        <option value="other">🔧 其他</option>
+      </select>
+    </div>
+    <div class="full">
+      <label>描述（選填）</label>
+      <textarea id="iDesc" placeholder="這個工具的用途…"></textarea>
+    </div>
+  </div>
+  <div class="row-btns">
+    <button class="btn btn-gray" onclick="clearForm()">清除</button>
+    <button class="btn btn-main" onclick="addItem()">儲存</button>
+  </div>
+</div>
+
+
+<!-- ── 搜尋 & 篩選 ── -->
+<div class="toolbar">
+  <input type="text" id="search" placeholder="搜尋名稱…" oninput="render()">
+  <div class="tabs">
+    <button class="tab active" onclick="setFilter('all',this)">全部</button>
+    <button class="tab" onclick="setFilter('gems',this)">✦ Gems</button>
+    <button class="tab" onclick="setFilter('gpts',this)">⚡ GPTs</button>
+    <button class="tab" onclick="setFilter('other',this)">🔧 其他</button>
+  </div>
+</div>
+
+<!-- ── 卡片 ── -->
+<div id="main"></div>
+
+<!-- ── 編輯 Modal ── -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <h3>✏️ 編輯工具</h3>
+    <div class="fields">
+      <div><label>名稱 *</label><input type="text" id="eName"></div>
+      <div><label>分類</label>
+        <select id="eCat">
+          <option value="gems">✦ Google Gems</option>
+          <option value="gpts">⚡ ChatGPT GPTs</option>
+          <option value="other">🔧 其他</option>
+        </select>
+      </div>
+      <div class="full"><label>網址 *</label><input type="text" id="eUrl"></div>
+      <div class="full"><label>描述</label><textarea id="eDesc"></textarea></div>
+    </div>
+    <div class="row-btns">
+      <button class="btn btn-gray" onclick="closeEdit()">取消</button>
+      <button class="btn btn-main" onclick="saveEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const KEY = 'gems_gpts_v1';
+let db = [], filter = 'all', editId = null, storageOk = false;
+
+// ── Storage ──
+try {
+  localStorage.setItem('_t','1'); localStorage.removeItem('_t');
+  storageOk = true;
+  db = JSON.parse(localStorage.getItem(KEY) || '[]');
+} catch(_) { document.getElementById('warnBar').style.display = 'block'; }
+
+function persist() { if (storageOk) localStorage.setItem(KEY, JSON.stringify(db)); }
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+
+// ── Toast ──
+function toast(msg, dur=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+// ── URL 輸入自動辨識 ──
+let dTimer = null;
+document.getElementById('iUrl').addEventListener('input', function(){
+  clearTimeout(dTimer);
+  const v = this.value.trim();
+  const hasUrl = v.length > 10 && v.startsWith('http');
+  document.getElementById('openPageBtn').style.display  = hasUrl ? 'inline-block' : 'none';
+  document.getElementById('openPageHint').style.display = hasUrl ? 'block' : 'none';
+  if (hasUrl) dTimer = setTimeout(()=>detectFromUrl(v), 700);
+  else hideDetectResult();
+});
+
+function openPage() {
+  const url = document.getElementById('iUrl').value.trim();
+  if (url) window.open(url, '_blank');
+}
+
+function flashCat() {
+  const el = document.getElementById('iCat');
+  el.style.transition = 'border-color .2s, background .2s';
+  el.style.borderColor = '#6c63ff';
+  el.style.background  = '#f0eeff';
+  setTimeout(() => {
+    el.style.borderColor = '#ddd';
+    el.style.background  = '#fff';
+  }, 1800);
+}
+
+async function detectFromUrl(raw) {
+  let url = raw;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  let cat = 'other', name = '';
+  try {
+    const u = new URL(url);
+    const h = u.hostname;
+    if (h.includes('chatgpt.com') || h.includes('openai.com')) {
+      cat = 'gpts';
+      const m = u.pathname.match(/\/g\/g-[A-Za-z0-9]+-(.+)/);
+      if (m) name = m[1].replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    } else if (h.includes('gemini.google.com') || h.includes('aistudio.google.com')) {
+      cat = 'gems';
+    }
+  } catch { return; }
+
+  document.getElementById('iCat').value = cat;
+  flashCat();
+
+  if (name) {
+    document.getElementById('iName').value = name;
+    showDetectResult(name, url, cat);
+    return;
+  }
+
+  // 嘗試透過 CORS proxy 抓取名稱
+  showFetchingHint(cat, url);
+  const fetched = await fetchPageTitle(url);
+  if (fetched) {
+    document.getElementById('iName').value = fetched;
+    showDetectResult(fetched, url, cat);
+  } else {
+    showDetectHint(cat, url);
+  }
+}
+
+async function fetchPageTitle(url) {
+  try {
+    const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url),
+      { signal: AbortSignal.timeout(9000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const html = data.contents || '';
+
+    // 優先抓 og:title（Google 分享頁面通常有設）
+    const ogMatch =
+      html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+    if (ogMatch) {
+      const t = ogMatch[1].trim().replace(/\s*[-|–]\s*(Gemini|Google).*/i, '').trim();
+      if (t && t.length < 100 && !/^gemini$/i.test(t)) return t;
+    }
+
+    // 次選 <title>
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch) {
+      const t = titleMatch[1].trim().replace(/\s*[-|–]\s*(Gemini|ChatGPT|Google).*/i, '').trim();
+      if (t && t.length < 100 && !/^(gemini|chatgpt)$/i.test(t)) return t;
+    }
+  } catch(_) {}
+  return null;
+}
+
+function showFetchingHint(cat, url) {
+  const META = { gems:'✦ Google Gems', gpts:'⚡ ChatGPT GPTs', other:'🔧 其他' };
+  const CLR  = { gems:'#1e7e34', gpts:'#1565c0', other:'#7b1fa2' };
+  const BG   = { gems:'#e6f4ea', gpts:'#e3f2fd', other:'#f3e5f5' };
+  const box  = document.getElementById('detectResult');
+  box.style.background = '#f0f9ff';
+  box.style.borderColor = '#7dd3fc';
+  document.getElementById('drLabel').textContent = '⏳ 辨識中，請稍候…';
+  document.getElementById('drLabel').style.color = '#0369a1';
+  document.getElementById('drName').style.display = 'none';
+  document.getElementById('drUrl').textContent = url;
+  const catEl = document.getElementById('drCat');
+  catEl.textContent = META[cat] || cat;
+  catEl.style.cssText = `background:${BG[cat]};color:${CLR[cat]}`;
+  box.style.display = 'block';
+}
+
+function showDetectResult(name, url, cat) {
+  const META = { gems:'✦ Google Gems', gpts:'⚡ ChatGPT GPTs', other:'🔧 其他' };
+  const CLR  = { gems:'#1e7e34', gpts:'#1565c0', other:'#7b1fa2' };
+  const BG   = { gems:'#e6f4ea', gpts:'#e3f2fd', other:'#f3e5f5' };
+  const box  = document.getElementById('detectResult');
+  box.style.background = '#f6f0ff';
+  box.style.borderColor = '#c4b5fd';
+  document.getElementById('drLabel').textContent = '✓ 已自動辨識';
+  document.getElementById('drLabel').style.color = '#6c63ff';
+  document.getElementById('drName').textContent = name;
+  document.getElementById('drName').style.display = 'block';
+  document.getElementById('drUrl').textContent  = url;
+  const catEl = document.getElementById('drCat');
+  catEl.textContent = META[cat] || cat;
+  catEl.style.cssText = `background:${BG[cat]};color:${CLR[cat]}`;
+  box.style.display = 'block';
+}
+
+function showDetectHint(cat, url) {
+  const META = { gems:'✦ Google Gems', gpts:'⚡ ChatGPT GPTs', other:'🔧 其他' };
+  const CLR  = { gems:'#1e7e34', gpts:'#1565c0', other:'#7b1fa2' };
+  const BG   = { gems:'#e6f4ea', gpts:'#e3f2fd', other:'#f3e5f5' };
+  const hints = {
+    gems:  '✦ Google Gem 網址無法自動取得名稱。請使用下方書籤工具，或直接在「名稱」欄手動輸入。',
+    gpts:  '⚡ GPT 網址無法取得名稱，請直接在「名稱」欄手動輸入。',
+    other: '分類已設為「其他」，請在「名稱」欄手動輸入。'
+  };
+  const box = document.getElementById('detectResult');
+  box.style.background = '#fffbeb';
+  box.style.borderColor = '#fcd34d';
+  document.getElementById('drLabel').textContent = hints[cat] || hints.other;
+  document.getElementById('drLabel').style.color = '#92400e';
+  document.getElementById('drName').style.display = 'none';
+  document.getElementById('drUrl').textContent = url;
+  const catEl = document.getElementById('drCat');
+  catEl.textContent = META[cat] || cat;
+  catEl.style.cssText = `background:${BG[cat]};color:${CLR[cat]}`;
+  box.style.display = 'block';
+  // 讓名稱欄 focus，引導用戶直接輸入
+  setTimeout(() => document.getElementById('iName').focus(), 100);
+}
+
+function hideDetectResult() {
+  document.getElementById('detectResult').style.display = 'none';
+}
+
+
+// ── 新增 ──
+function addItem() {
+  const name = document.getElementById('iName').value.trim();
+  const url  = document.getElementById('iUrl').value.trim();
+  const cat  = document.getElementById('iCat').value;
+  const desc = document.getElementById('iDesc').value.trim();
+  if (!name) { toast('⚠ 請填入名稱'); return; }
+  if (!url)  { toast('⚠ 請填入網址'); return; }
+  db.unshift({ id:uid(), name, url, cat, desc, ts:Date.now() });
+  persist();
+  clearForm();
+  render();
+  toast('✓ 已儲存');
+}
+
+function clearForm() {
+  ['iUrl','iName','iDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('iCat').value = 'gems';
+  hideDetectResult();
+}
+
+// ── 篩選 ──
+function setFilter(f, el) {
+  filter = f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+// ── 渲染 ──
+const META = {
+  gems:  { icon:'✦', label:'Google Gems',  cls:'b-gems' },
+  gpts:  { icon:'⚡', label:'ChatGPT GPTs', cls:'b-gpts' },
+  other: { icon:'🔧', label:'其他工具',      cls:'b-other' }
+};
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const list = db.filter(it=>(filter==='all'||it.cat===filter) && (!q||it.name.toLowerCase().includes(q)||(it.desc||'').toLowerCase().includes(q)));
+  const el = document.getElementById('main');
+  if (!list.length) {
+    el.innerHTML='<div class="empty"><div class="ei">📭</div><p>還沒有收藏</p></div>';
+    return;
+  }
+  const groups = { gems:[], gpts:[], other:[] };
+  list.forEach(it=>(groups[it.cat]||groups.other).push(it));
+  let html='';
+  for (const [cat,items] of Object.entries(groups)) {
+    if (!items.length) continue;
+    const m = META[cat];
+    html += `<div class="sec-title">${m.icon} ${m.label} <span class="sec-count">${items.length}</span></div>
+    <div class="cards">${items.map(it=>cardHtml(it,m)).join('')}</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function cardHtml(it, m) {
+  const short = it.url.replace(/^https?:\/\//,'').replace(/\/$/,'');
+  const desc = it.desc ? `<div class="card-desc">${esc(it.desc)}</div>` : '';
+  return `<div class="card">
+    <span class="badge ${m.cls}">${m.icon} ${m.label}</span>
+    <div class="card-name">${esc(it.name)}</div>
+    ${desc}
+    <div class="card-url" title="${esc(it.url)}">${esc(short)}</div>
+    <div class="card-actions">
+      <a class="ca-open" href="${esc(it.url)}" target="_blank" rel="noopener">開啟</a>
+      <button class="ca-edit" onclick="openEdit('${it.id}')">編輯</button>
+      <button class="ca-del" onclick="delItem('${it.id}')">刪除</button>
+    </div>
+  </div>`;
+}
+
+// ── 刪除 ──
+function delItem(id) {
+  if (!confirm('確定刪除？')) return;
+  db = db.filter(it=>it.id!==id);
+  persist(); render(); toast('已刪除');
+}
+
+// ── 編輯 ──
+function openEdit(id) {
+  const it = db.find(x=>x.id===id); if (!it) return;
+  editId = id;
+  document.getElementById('eName').value = it.name;
+  document.getElementById('eUrl').value  = it.url;
+  document.getElementById('eCat').value  = it.cat;
+  document.getElementById('eDesc').value = it.desc||'';
+  document.getElementById('editOverlay').classList.add('open');
+}
+function closeEdit() { document.getElementById('editOverlay').classList.remove('open'); editId=null; }
+function saveEdit() {
+  const name=document.getElementById('eName').value.trim();
+  const url=document.getElementById('eUrl').value.trim();
+  if (!name){toast('⚠ 請填入名稱');return;}
+  if (!url){toast('⚠ 請填入網址');return;}
+  const idx=db.findIndex(x=>x.id===editId); if(idx<0)return;
+  db[idx]={...db[idx],name,url,cat:document.getElementById('eCat').value,desc:document.getElementById('eDesc').value.trim()};
+  persist(); closeEdit(); render(); toast('✓ 已更新');
+}
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeEdit(); });
+render();
+</script>
+</body>
+</html>
